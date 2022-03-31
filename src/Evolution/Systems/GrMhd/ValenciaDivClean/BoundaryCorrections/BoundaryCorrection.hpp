@@ -14,6 +14,7 @@ namespace grmhd::ValenciaDivClean {
 namespace BoundaryCorrections {
 /// \cond
 class Hll;
+class Hlld;
 class Rusanov;
 /// \endcond
 
@@ -34,7 +35,7 @@ class BoundaryCorrection : public PUP::able {
   WRAPPED_PUPable_abstract(BoundaryCorrection);  // NOLINT
   /// \endcond
 
-  using creatable_classes = tmpl::list<Hll, Rusanov>;
+  using creatable_classes = tmpl::list<Hll, Hlld, Rusanov>;
 
   virtual std::unique_ptr<BoundaryCorrection> get_clone() const = 0;
 };
