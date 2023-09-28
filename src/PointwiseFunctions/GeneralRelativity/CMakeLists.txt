@@ -16,6 +16,7 @@ spectre_target_sources(
   InverseSpacetimeMetric.cpp
   KerrSchildCoords.cpp
   Lapse.cpp
+  LocalTetrad.cpp
   ProjectionOperators.cpp
   Psi4.cpp
   Psi4Real.cpp
@@ -47,6 +48,7 @@ spectre_target_headers(
   InverseSpacetimeMetric.hpp
   KerrSchildCoords.hpp
   Lapse.hpp
+  LocalTetrad.hpp
   ProjectionOperators.hpp
   Ricci.hpp
   Psi4.hpp
