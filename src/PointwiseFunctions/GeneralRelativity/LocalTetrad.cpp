@@ -70,8 +70,8 @@ void local_tetrad(
       (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) /
       square(get(lapse));
   ;
-  get<3, 2>(*inverse_local_tetrad_tensor) = get<1, 2>(spatial_metric) /
-                                            (C * get<2, 2>(spatial_metric));
+  get<3, 2>(*inverse_local_tetrad_tensor) =
+      get<1, 2>(spatial_metric) / (C * get<2, 2>(spatial_metric));
   get<3, 3>(*inverse_local_tetrad_tensor) = 1.0 / C;
 }
 }  // namespace gr
@@ -80,18 +80,17 @@ void local_tetrad(
 #define FRAME(data) BOOST_PP_TUPLE_ELEM(1, data)
 
 // TODO: Fix this...
-#define INSTANTIATE(_, data)                                                  \
-  template void gr::local_tetrad(                                             \
-      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*>                          \
-      local_tetrad_tensor,                                                    \
-      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*>                          \
-      inverse_local_tetrad_tensor,                                            \
-      const Scalar<DTYPE(data)> lapse,                                        \
-      const tnsr::I<DTYPE(data), 3, FRAME(data)>& shift,                      \
-      const tnsr::aa<DTYPE(data), 3, FRAME(data)>& spacetime_metric);
+#define INSTANTIATE(_, data)                                              \
+  template void gr::local_tetrad(                                         \
+      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*> local_tetrad_tensor, \
+      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*>                      \
+          inverse_local_tetrad_tensor,                                    \
+      const Scalar<DTYPE(data)>& lapse,                                   \
+      const tnsr::I<DTYPE(data), 3, FRAME(data)>& shift,                  \
+      const tnsr::ii<DTYPE(data), 3, FRAME(data)>& spacetime_metric,      \
+      const tnsr::II<DTYPE(data), 3, FRAME(data)>& inverse_spacetime_metric);
 
-GENERATE_INSTANTIATIONS(INSTANTIATE, (1, 2, 3), (double, DataVector),
-                      FRAME(data))
+GENERATE_INSTANTIATIONS(INSTANTIATE, (double, DataVector), (Frame::Inertial));
 
 #undef DIM
 #undef DTYPE
