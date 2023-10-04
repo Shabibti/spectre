@@ -19,18 +19,19 @@ void local_tetrad(
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
   // Define helper variables
-  const auto Z = 1.0 / square(get(lapse));
-  const auto B = square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric));
-  const auto C = 1.0 / sqrt(get<2, 2>(spatial_metric));
-  const auto D =
+  const DataType Z = 1.0 / square(get(lapse));
+  const DataType B =
+      square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric));
+  const DataType C = 1.0 / sqrt(get<2, 2>(spatial_metric));
+  const DataType D =
       C / sqrt(get<1, 1>(spatial_metric) * get<2, 2>(spatial_metric) -
                square(get<1, 2>(spatial_metric)));
-  const auto E = Z * (get<0>(shift) * get<0, 1>(inverse_spatial_metric) -
-                      get<1>(shift) * get<0, 0>(inverse_spatial_metric));
-  const auto F = Z * get<0, 1>(inverse_spatial_metric);
-  const auto G = Z * (get<0>(shift) * get<0, 2>(inverse_spatial_metric) -
-                      get<2>(shift) * get<0, 0>(inverse_spatial_metric));
-  const auto H = Z * get<0, 2>(inverse_spatial_metric);
+  const DataType E = Z * (get<0>(shift) * get<0, 1>(inverse_spatial_metric) -
+                          get<1>(shift) * get<0, 0>(inverse_spatial_metric));
+  const DataType F = Z * get<0, 1>(inverse_spatial_metric);
+  const DataType G = Z * (get<0>(shift) * get<0, 2>(inverse_spatial_metric) -
+                          get<2>(shift) * get<0, 0>(inverse_spatial_metric));
+  const DataType H = Z * get<0, 2>(inverse_spatial_metric);
 
   // Compute transformation components
   get<0, 0>(*local_tetrad_tensor) = 1.0 / get(lapse);
