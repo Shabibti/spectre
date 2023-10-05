@@ -35,13 +35,16 @@ void local_tetrad(
 
   // Compute transformation components
   get<0, 0>(*local_tetrad_tensor) = 1.0 / get(lapse);
-  get<1, 0>(*local_tetrad_tensor) = -get<0>(shift) / get(lapse);
+  get<1, 0>(*local_tetrad_tensor) =
+      -get<0>(shift) * get<0, 0>(*local_tetrad_tensor);
   get<1, 1>(*local_tetrad_tensor) = sqrt(get<0, 0>(inverse_spatial_metric));
-  get<2, 0>(*local_tetrad_tensor) = -get<1>(shift) / get(lapse);
+  get<2, 0>(*local_tetrad_tensor) =
+      -get<1>(shift) * get<0, 0>(*local_tetrad_tensor);
   get<2, 1>(*local_tetrad_tensor) = get<0, 0>(inverse_spatial_metric) /
                                     sqrt(get<0, 1>(inverse_spatial_metric));
   get<2, 2>(*local_tetrad_tensor) = D * get<2, 2>(spatial_metric);
-  get<3, 0>(*local_tetrad_tensor) = -get<2>(shift) / get(lapse);
+  get<3, 0>(*local_tetrad_tensor) =
+      -get<2>(shift) * get<0, 0>(*local_tetrad_tensor);
   get<3, 1>(*local_tetrad_tensor) = get<0, 0>(inverse_spatial_metric) /
                                     sqrt(get<0, 2>(inverse_spatial_metric));
   get<3, 2>(*local_tetrad_tensor) = D * get<1, 2>(spatial_metric);
