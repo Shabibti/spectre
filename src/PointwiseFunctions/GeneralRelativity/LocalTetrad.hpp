@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstddef>
+#include <utility>
 
 #include "DataStructures/Tensor/TypeAliases.hpp"
 #include "Utilities/Gsl.hpp"
@@ -26,14 +27,9 @@ namespace gr {
  */
 
 template <typename DataType>
-tnsr::Ab<DataType, 3, Frame::Inertial> local_tetrad(
-    const Scalar<DataType>& lapse,
-    const tnsr::I<DataType, 3, Frame::Inertial>& shift,
-    const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
-    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric);
-
-template <typename DataType>
-tnsr::Ab<DataType, 3, Frame::Inertial> inverse_local_tetrad(
+std::pair<tnsr::Ab<DataType, 3, Frame::Inertial>,
+          tnsr::Ab<DataType, 3, Frame::Inertial>>
+local_tetrad(
     const Scalar<DataType>& lapse,
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
