@@ -64,12 +64,10 @@ void local_tetrad(
   get<2, 2>(*inverse_local_tetrad_tensor) = 1 / (D * get<2, 2>(spatial_metric));
   get<3, 0>(*inverse_local_tetrad_tensor) =
       -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) /
-      square(get(lapse));
+      (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) * Z;
   get<3, 1>(*inverse_local_tetrad_tensor) =
       -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) /
-      square(get(lapse));
+      (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) * Z;
   get<3, 2>(*inverse_local_tetrad_tensor) =
       get<1, 2>(spatial_metric) / (sqrt(get<2, 2>(spatial_metric)));
 }
