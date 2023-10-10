@@ -19,19 +19,21 @@ void local_tetrad(
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
   // Define helper variables
-  const DataType Z = 1.0 / square(get(lapse));
+  const DataType inv_square_lapse = 1.0 / square(get(lapse));
   const DataType B =
       square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric));
   const DataType D =
       1.0 / sqrt(get<2, 2>(spatial_metric) *
                  (get<1, 1>(spatial_metric) * get<2, 2>(spatial_metric) -
                   square(get<1, 2>(spatial_metric))));
-  const DataType E = Z * (get<0>(shift) * get<0, 1>(inverse_spatial_metric) -
+  const DataType E =
+      inv_square_lapse * (get<0>(shift) * get<0, 1>(inverse_spatial_metric) -
                           get<1>(shift) * get<0, 0>(inverse_spatial_metric));
-  const DataType F = Z * get<0, 1>(inverse_spatial_metric);
-  const DataType G = Z * (get<0>(shift) * get<0, 2>(inverse_spatial_metric) -
+  const DataType F = inv_square_lapse * get<0, 1>(inverse_spatial_metric);
+  const DataType G =
+      inv_square_lapse * (get<0>(shift) * get<0, 2>(inverse_spatial_metric) -
                           get<2>(shift) * get<0, 0>(inverse_spatial_metric));
-  const DataType H = Z * get<0, 2>(inverse_spatial_metric);
+  const DataType H = inv_square_lapse * get<0, 2>(inverse_spatial_metric);
 
   // Compute transformation components
   get<0, 0>(*local_tetrad_tensor) = 1.0 / get(lapse);
@@ -64,10 +66,12 @@ void local_tetrad(
   get<2, 2>(*inverse_local_tetrad_tensor) = 1 / (D * get<2, 2>(spatial_metric));
   get<3, 0>(*inverse_local_tetrad_tensor) =
       -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) * Z;
+      (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
+      inv_square_lapse;
   get<3, 1>(*inverse_local_tetrad_tensor) =
       -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) * Z;
+      (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
+      inv_square_lapse;
   get<3, 2>(*inverse_local_tetrad_tensor) =
       get<1, 2>(spatial_metric) / (sqrt(get<2, 2>(spatial_metric)));
 }
