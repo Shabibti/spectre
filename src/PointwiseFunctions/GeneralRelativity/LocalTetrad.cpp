@@ -20,6 +20,8 @@ void local_tetrad(
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
   // Define helper variables
   const DataType inv_square_lapse = 1.0 / square(get(lapse));
+  const DataType gamma12_div_gamma22 =
+      get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric);
   const DataType B =
       square(square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric)));
   const DataType D =
@@ -66,12 +68,10 @@ void local_tetrad(
   get<3, 3>(*inverse_local_tetrad_tensor) = sqrt(get<2, 2>(spatial_metric));
   get<3, 0>(*inverse_local_tetrad_tensor) =
       -(B * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
-      inv_square_lapse;
+      (G + E * gamma12_div_gamma22) * inv_square_lapse;
   get<3, 1>(*inverse_local_tetrad_tensor) =
       -(B * get<3, 3>(*inverse_local_tetrad_tensor)) *
-      (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
-      inv_square_lapse;
+      (H + F * gamma12_div_gamma22) * inv_square_lapse;
   get<3, 2>(*inverse_local_tetrad_tensor) =
       get<1, 2>(spatial_metric) / (sqrt(get<2, 2>(spatial_metric)));
 }
