@@ -9,9 +9,9 @@
 #include "Utilities/Gsl.hpp"
 
 /// \cond
-namespace frame {
+namespace Frame {
 struct Inertial;
-}  // namespace frame
+}  // namespace Frame
 /// \endcond
 
 namespace gr {
