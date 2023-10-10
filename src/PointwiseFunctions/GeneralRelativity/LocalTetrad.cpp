@@ -21,7 +21,7 @@ void local_tetrad(
   // Define helper variables
   const DataType inv_square_lapse = 1.0 / square(get(lapse));
   const DataType B =
-      square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric));
+      square(square(get(lapse)) / sqrt(get<0, 0>(inverse_spatial_metric)));
   const DataType D =
       1.0 / sqrt(get<2, 2>(spatial_metric) *
                  (get<1, 1>(spatial_metric) * get<2, 2>(spatial_metric) -
@@ -60,16 +60,16 @@ void local_tetrad(
   get<1, 1>(*inverse_local_tetrad_tensor) =
       1.0 / sqrt(get<0, 0>(inverse_spatial_metric));
   get<2, 0>(*inverse_local_tetrad_tensor) =
-      -square(B) * E / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
+      -B * E / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
   get<2, 1>(*inverse_local_tetrad_tensor) =
-      -square(B) * F / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
+      -B * F / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
   get<2, 2>(*inverse_local_tetrad_tensor) = 1 / (D * get<2, 2>(spatial_metric));
   get<3, 0>(*inverse_local_tetrad_tensor) =
-      -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
+      -(B * get<3, 3>(*inverse_local_tetrad_tensor)) *
       (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
       inv_square_lapse;
   get<3, 1>(*inverse_local_tetrad_tensor) =
-      -(square(B) * get<3, 3>(*inverse_local_tetrad_tensor)) *
+      -(B * get<3, 3>(*inverse_local_tetrad_tensor)) *
       (H + F * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
       inv_square_lapse;
   get<3, 2>(*inverse_local_tetrad_tensor) =
