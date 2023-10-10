@@ -26,6 +26,20 @@ namespace gr {
  */
 
 template <typename DataType>
+tnsr::Ab<DataType, 3, Frame::Inertial> local_tetrad(
+    const Scalar<DataType>& lapse,
+    const tnsr::I<DataType, 3, Frame::Inertial>& shift,
+    const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
+    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric);
+
+template <typename DataType>
+tnsr::Ab<DataType, 3, Frame::Inertial> inverse_local_tetrad(
+    const Scalar<DataType>& lapse,
+    const tnsr::I<DataType, 3, Frame::Inertial>& shift,
+    const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
+    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric);
+
+template <typename DataType>
 void local_tetrad(
     gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*> local_tetrad_tensor,
     gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*>
