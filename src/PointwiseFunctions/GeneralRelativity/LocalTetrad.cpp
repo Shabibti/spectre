@@ -1,7 +1,10 @@
 // Distributed under the MIT License.
 // See LICENSE.txt for details.
 
+#include "PointwiseFunctions/GeneralRelativity/LocalTetrad.hpp"
+
 #include <cmath>
+#include <utility>
 
 #include "DataStructures/Tensor/Tensor.hpp"
 #include "Utilities/ConstantExpressions.hpp"
@@ -11,53 +14,28 @@
 namespace gr {
 
 template <typename DataType>
-tnsr::Ab<DataType, 3, Frame::Inertial> local_tetrad(
+std::pair<tnsr::Ab<DataType, 3, Frame::Inertial>,
+          tnsr::Ab<DataType, 3, Frame::Inertial>>
+local_tetrad(
     const Scalar<DataType>& lapse,
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
-  tnsr::Ab<DataType, 3, Frame::Inertial> local_tetrad_tensor{
-      {{{0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}}}};
-  tnsr::Ab<DataType, 3, Frame::Inertial> inverse_local_tetrad_tensor{
-      {{{0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}}}};
+  auto local_tetrad_tensor =
+      make_with_value<tnsr::Ab<DataType, 3, Frame::Inertial>>(lapse, 0.0);
+  auto inverse_local_tetrad_tensor =
+      make_with_value<tnsr::Ab<DataType, 3, Frame::Inertial>>(lapse, 0.0);
   local_tetrad(make_not_null(&local_tetrad_tensor),
                make_not_null(&inverse_local_tetrad_tensor), lapse, shift,
                spatial_metric, inverse_spatial_metric);
-  return local_tetrad_tensor;
-};
-
-template <typename DataType>
-tnsr::Ab<DataType, 3, Frame::Inertial> inverse_local_tetrad(
-    const Scalar<DataType>& lapse,
-    const tnsr::I<DataType, 3, Frame::Inertial>& shift,
-    const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
-    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
-  tnsr::Ab<DataType, 3, Frame::Inertial> local_tetrad_tensor{
-      {{{0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}}}};
-  tnsr::Ab<DataType, 3, Frame::Inertial> inverse_local_tetrad_tensor{
-      {{{0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}}}};
-  local_tetrad(make_not_null(&local_tetrad_tensor),
-               make_not_null(&inverse_local_tetrad_tensor), lapse, shift,
-               spatial_metric, inverse_spatial_metric);
-  return inverse_local_tetrad_tensor;
+  return std::pair{local_tetrad_tensor, inverse_local_tetrad_tensor};
 };
 
 template <typename DataType>
 void local_tetrad(
-    gsl::not_null<tnsr::Ab<DataType, 3>*> local_tetrad_tensor,
-    gsl::not_null<tnsr::Ab<DataType, 3>*> inverse_local_tetrad_tensor,
+    gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*> local_tetrad_tensor,
+    gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*>
+        inverse_local_tetrad_tensor,
     const Scalar<DataType>& lapse,
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
@@ -126,19 +104,17 @@ void local_tetrad(
 
 // TODO: Fix this...
 #define INSTANTIATE(_, data)                                                  \
-  template tnsr::Ab<DTYPE(data), 3, FRAME(data)> gr::local_tetrad(            \
-      const Scalar<DTYPE(data)>& lapse,                                       \
-      const tnsr::I<DTYPE(data), 3, FRAME(data)>& shift,                      \
-      const tnsr::ii<DTYPE(data), 3, FRAME(data)>& spacetime_metric,          \
-      const tnsr::II<DTYPE(data), 3, FRAME(data)>& inverse_spacetime_metric); \
-  template tnsr::Ab<DTYPE(data), 3, FRAME(data)> gr::inverse_local_tetrad(    \
+  template std::pair<tnsr::Ab<DTYPE(data), 3, FRAME(data)>,                   \
+                     tnsr::Ab<DTYPE(data), 3, FRAME(data)>>                   \
+  gr::local_tetrad(                                                           \
       const Scalar<DTYPE(data)>& lapse,                                       \
       const tnsr::I<DTYPE(data), 3, FRAME(data)>& shift,                      \
       const tnsr::ii<DTYPE(data), 3, FRAME(data)>& spacetime_metric,          \
       const tnsr::II<DTYPE(data), 3, FRAME(data)>& inverse_spacetime_metric); \
   template void gr::local_tetrad(                                             \
-      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*> local_tetrad_tensor,     \
-      const gsl::not_null<tnsr::Ab<DTYPE(data), 3>*>                          \
+      const gsl::not_null<tnsr::Ab<DTYPE(data), 3, FRAME(data)>*>             \
+          local_tetrad_tensor,                                                \
+      const gsl::not_null<tnsr::Ab<DTYPE(data), 3, FRAME(data)>*>             \
           inverse_local_tetrad_tensor,                                        \
       const Scalar<DTYPE(data)>& lapse,                                       \
       const tnsr::I<DTYPE(data), 3, FRAME(data)>& shift,                      \
@@ -147,7 +123,6 @@ void local_tetrad(
 
 GENERATE_INSTANTIATIONS(INSTANTIATE, (double, DataVector), (Frame::Inertial));
 
-#undef DIM
 #undef DTYPE
 #undef FRAME
 #undef INSTANTIATE
