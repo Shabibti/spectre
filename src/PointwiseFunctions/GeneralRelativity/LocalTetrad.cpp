@@ -54,16 +54,16 @@ void local_tetrad(
 
   // Compute inverse components
   get<0, 0>(*inverse_local_tetrad_tensor) = get(lapse);
-  get<3, 3>(*inverse_local_tetrad_tensor) = sqrt(get<2, 2>(spatial_metric));
   get<1, 0>(*inverse_local_tetrad_tensor) =
       get<0>(shift) / sqrt(get<0, 0>(inverse_spatial_metric));
   get<1, 1>(*inverse_local_tetrad_tensor) =
       1.0 / sqrt(get<0, 0>(inverse_spatial_metric));
-  get<2, 0>(*inverse_local_tetrad_tensor) =
-      -B * E / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
-  get<2, 1>(*inverse_local_tetrad_tensor) =
-      -B * F / (D * get<2, 2>(spatial_metric) * square(get(lapse)));
   get<2, 2>(*inverse_local_tetrad_tensor) = 1 / (D * get<2, 2>(spatial_metric));
+  get<2, 0>(*inverse_local_tetrad_tensor) =
+      -B * E * inv_square_lapse * get<2, 2>(*inverse_local_tetrad_tensor);
+  get<2, 1>(*inverse_local_tetrad_tensor) =
+      -B * F * inv_square_lapse * get<2, 2>(*inverse_local_tetrad_tensor);
+  get<3, 3>(*inverse_local_tetrad_tensor) = sqrt(get<2, 2>(spatial_metric));
   get<3, 0>(*inverse_local_tetrad_tensor) =
       -(B * get<3, 3>(*inverse_local_tetrad_tensor)) *
       (G + E * get<1, 2>(spatial_metric) / get<2, 2>(spatial_metric)) *
