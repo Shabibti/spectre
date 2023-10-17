@@ -40,6 +40,11 @@ void local_tetrad(
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
+for (size_t i = 0; i < local_tetrad_tensor->size(); ++i) {
+  (*local_tetrad_tensor)[i] = 0.0;
+  (*inverse_local_tetrad_tensor)[i] = 0.0;
+}
+
   // Define helper variables
   const DataType inv_square_lapse = 1.0 / square(get(lapse));
   const DataType gamma12_div_gamma22 =

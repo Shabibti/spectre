@@ -9,6 +9,7 @@ set(LIBRARY_SOURCES
   Test_ComputeSpacetimeQuantities.cpp
   Test_InterfaceNullNormal.cpp
   Test_KerrSchildCoords.cpp
+  Test_LocalTetrad.cpp
   Test_ProjectionOperators.cpp
   Test_Psi4.cpp
   Test_Ricci.cpp
