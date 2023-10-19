@@ -40,10 +40,10 @@ void local_tetrad(
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
     const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric) {
-for (size_t i = 0; i < local_tetrad_tensor->size(); ++i) {
-  (*local_tetrad_tensor)[i] = 0.0;
-  (*inverse_local_tetrad_tensor)[i] = 0.0;
-}
+  for (size_t i = 0; i < local_tetrad_tensor->size(); ++i) {
+    (*local_tetrad_tensor)[i] = 0.0;
+    (*inverse_local_tetrad_tensor)[i] = 0.0;
+  }
 
   // Define helper variables
   const DataType inv_square_lapse = 1.0 / square(get(lapse));
@@ -71,14 +71,14 @@ for (size_t i = 0; i < local_tetrad_tensor->size(); ++i) {
   get<1, 1>(*local_tetrad_tensor) = sqrt(get<0, 0>(inverse_spatial_metric));
   get<2, 0>(*local_tetrad_tensor) =
       -get<1>(shift) * get<0, 0>(*local_tetrad_tensor);
-  get<2, 1>(*local_tetrad_tensor) = get<0, 0>(inverse_spatial_metric) /
-                                    sqrt(get<0, 1>(inverse_spatial_metric));
+  get<2, 1>(*local_tetrad_tensor) = get<0, 1>(inverse_spatial_metric) /
+                                    sqrt(get<0, 0>(inverse_spatial_metric));
   get<2, 2>(*local_tetrad_tensor) = D * get<2, 2>(spatial_metric);
   get<3, 0>(*local_tetrad_tensor) =
       -get<2>(shift) * get<0, 0>(*local_tetrad_tensor);
-  get<3, 1>(*local_tetrad_tensor) = get<0, 0>(inverse_spatial_metric) /
-                                    sqrt(get<0, 2>(inverse_spatial_metric));
-  get<3, 2>(*local_tetrad_tensor) = D * get<1, 2>(spatial_metric);
+  get<3, 1>(*local_tetrad_tensor) = get<0, 2>(inverse_spatial_metric) /
+                                    sqrt(get<0, 0>(inverse_spatial_metric));
+  get<3, 2>(*local_tetrad_tensor) = -D * get<1, 2>(spatial_metric);
   get<3, 3>(*local_tetrad_tensor) = 1.0 / sqrt(get<2, 2>(spatial_metric));
 
   // Compute inverse components
