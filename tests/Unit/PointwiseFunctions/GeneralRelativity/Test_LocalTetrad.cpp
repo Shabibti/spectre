@@ -38,17 +38,6 @@ void test_local_tetrad_scalar(const DataType& used_for_size) {
   CHECK_ITERABLE_APPROX(local_tetrad.second, python_inverse_local_tetrad);
 
   return;
-
-  pypp::check_with_random_values<1>(
-      static_cast<void (*)(
-          gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*>,
-          gsl::not_null<tnsr::Ab<DataType, 3, Frame::Inertial>*>,
-          const Scalar<DataType>&, const tnsr::I<DataType, 3, Frame::Inertial>&,
-          const tnsr::ii<DataType, 3, Frame::Inertial>&,
-          const tnsr::II<DataType, 3, Frame::Inertial>&)>(
-          &gr::local_tetrad<DataType>),
-      "LocalTetrad", {"local_tetrad", "inverse_local_tetrad"}, {{{0.01, 1.0}}},
-      used_for_size);
 }
 }  // namespace
 
