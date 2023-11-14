@@ -7,6 +7,7 @@
 
 #include "DataStructures/Tensor/EagerMath/DeterminantAndInverse.hpp"
 #include "DataStructures/Tensor/TypeAliases.hpp"
+#include "Domain/Structure/Direction.hpp"
 #include "Framework/CheckWithRandomValues.hpp"
 #include "Framework/SetupLocalPythonEnvironment.hpp"
 #include "Helpers/PointwiseFunctions/GeneralRelativity/TestHelpers.hpp"
@@ -33,7 +34,8 @@ void test_local_tetrad_scalar(const DataType& used_for_size) {
           "LocalTetrad", "inverse_local_tetrad", lapse, shift, spatial_metric,
           inverse_spatial_metric);
   const auto local_tetrad =
-      gr::local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric);
+      gr::local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric,
+                       Direction<3>::upper_xi());
   CHECK_ITERABLE_APPROX(local_tetrad.first, python_local_tetrad);
   CHECK_ITERABLE_APPROX(local_tetrad.second, python_inverse_local_tetrad);
 
