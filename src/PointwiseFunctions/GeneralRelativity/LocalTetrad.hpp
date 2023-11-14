@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "DataStructures/Tensor/TypeAliases.hpp"
+#include "Domain/Structure/Direction.hpp"
 #include "Utilities/Gsl.hpp"
 
 /// \cond
@@ -33,7 +34,8 @@ local_tetrad(
     const Scalar<DataType>& lapse,
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
-    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric);
+    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric,
+    const Direction<3>& normal_direction);
 
 template <typename DataType>
 void local_tetrad(
@@ -43,6 +45,7 @@ void local_tetrad(
     const Scalar<DataType>& lapse,
     const tnsr::I<DataType, 3, Frame::Inertial>& shift,
     const tnsr::ii<DataType, 3, Frame::Inertial>& spatial_metric,
-    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric);
+    const tnsr::II<DataType, 3, Frame::Inertial>& inverse_spatial_metric,
+    const Direction<3>& normal_direction);
 /// @}
 }  // namespace gr
