@@ -28,14 +28,14 @@ void test_local_tetrad_scalar(const DataType& used_for_size) {
   const auto python_local_tetrad =
       pypp::call<tnsr::Ab<DataType, 3, Frame::Inertial>>(
           "LocalTetrad", "local_tetrad", lapse, shift, spatial_metric,
-          inverse_spatial_metric);
+          inverse_spatial_metric, 2);
   const auto python_inverse_local_tetrad =
       pypp::call<tnsr::Ab<DataType, 3, Frame::Inertial>>(
           "LocalTetrad", "inverse_local_tetrad", lapse, shift, spatial_metric,
-          inverse_spatial_metric);
+          inverse_spatial_metric, 2);
   const auto local_tetrad =
       gr::local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric,
-                       Direction<3>::upper_xi());
+                       Direction<3>::upper_eta());
   CHECK_ITERABLE_APPROX(local_tetrad.first, python_local_tetrad);
   CHECK_ITERABLE_APPROX(local_tetrad.second, python_inverse_local_tetrad);
 
