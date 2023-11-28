@@ -3,7 +3,21 @@
 
 import numpy as np
 
-def local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric):
+'''
+direction: 1 = xi, 2 = eta, 3 = zeta
+'''
+def local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric, direction):
+    if direction == 2 or direction == -2:
+        permutation = [1, 2, 0]
+        shift = np.array([shift[i] for i in permutation])
+        spatial_metric = np.array([[spatial_metric[i][j] for j in permutation] for i in permutation])
+        inverse_spatial_metric = np.array([[inverse_spatial_metric[i][j] for j in permutation] for i in permutation])
+    elif direction == 3 or direction == -3:
+        permutation = [2, 0, 1]
+        shift = np.array([shift[i] for i in permutation])
+        spatial_metric = np.array([[spatial_metric[i][j] for j in permutation] for i in permutation])
+        inverse_spatial_metric = np.array([[inverse_spatial_metric[i][j] for j in permutation] for i in permutation])
+
     #helper variable
     D = 1/np.sqrt(spatial_metric[2][2] * (spatial_metric[1][1]*spatial_metric[2][2] - spatial_metric[1][2]*spatial_metric[1][2]))
 
@@ -14,7 +28,18 @@ def local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric):
 
     return M
 
-def inverse_local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric):
+def inverse_local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric, direction):
+    if direction == 2 or direction == -2:
+        permutation = [1, 2, 0]
+        shift = np.array([shift[i] for i in permutation])
+        spatial_metric = np.array([[spatial_metric[i][j] for j in permutation] for i in permutation])
+        inverse_spatial_metric = np.array([[inverse_spatial_metric[i][j] for j in permutation] for i in permutation])
+    elif direction == 3 or direction == -3:
+        permutation = [2, 0, 1]
+        shift = np.array([shift[i] for i in permutation])
+        spatial_metric = np.array([[spatial_metric[i][j] for j in permutation] for i in permutation])
+        inverse_spatial_metric = np.array([[inverse_spatial_metric[i][j] for j in permutation] for i in permutation])
+
     #helper variables
     B = 1/np.sqrt(lapse**(-4.)*inverse_spatial_metric[0][0])
     C = 1/np.sqrt(spatial_metric[2][2])
@@ -28,5 +53,5 @@ def inverse_local_tetrad(lapse, shift, spatial_metric, inverse_spatial_metric):
                   [inverse_spatial_metric[0][0]**(-.5)*shift[0], inverse_spatial_metric[0][0]**(-.5), 0, 0],
                   [-B*B*E/(D*spatial_metric[2][2]*lapse*lapse), -B*B*F/(D*lapse*lapse*spatial_metric[2][2]), 1/(D*spatial_metric[2][2]), 0],
                   [-(B*B/C)*(1/(lapse*lapse))*(G + E*spatial_metric[1][2]/spatial_metric[2][2]), -(B*B/C)*(1/(lapse*lapse))*(H + F*spatial_metric[1][2]/spatial_metric[2][2]), spatial_metric[1][2]/(C*spatial_metric[2][2]), 1/C]])
-    
+
     return M_inv
