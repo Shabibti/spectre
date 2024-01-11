@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <brigand/sequences/list.hpp>
 #include <memory>
 #include <optional>
 
@@ -122,11 +123,14 @@ class Hll final : public BoundaryCorrection {
                  ::Tags::NormalDotFlux<Tags::TildeS<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildeB<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildePhi>,
+                 gr::Tags::SpatialMetric<DataVector, 3>,
                  LargestOutgoingCharSpeed, LargestIngoingCharSpeed>;
   using dg_package_data_temporary_tags =
       tmpl::list<gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>>;
   using dg_package_data_primitive_tags = tmpl::list<>;
   using dg_package_data_volume_tags = tmpl::list<>;
+  using sarah_list = tmpl::list<gr::Tags::SpatialMetric<DataVector, 3>,
+                                gr::Tags::InverseSpatialMetric<DataVector, 3>>;
 
   static double dg_package_data(
       gsl::not_null<Scalar<DataVector>*> packaged_tilde_d,
@@ -143,6 +147,8 @@ class Hll final : public BoundaryCorrection {
       gsl::not_null<tnsr::I<DataVector, 3, Frame::Inertial>*>
           packaged_normal_dot_flux_tilde_b,
       gsl::not_null<Scalar<DataVector>*> packaged_normal_dot_flux_tilde_phi,
+      gsl::not_null<tnsr::ii<DataVector, 3, Frame::Inertial>*>
+          packaged_spatial_metric,
       gsl::not_null<Scalar<DataVector>*> packaged_largest_outgoing_char_speed,
       gsl::not_null<Scalar<DataVector>*> packaged_largest_ingoing_char_speed,
 
@@ -161,6 +167,9 @@ class Hll final : public BoundaryCorrection {
 
       const Scalar<DataVector>& lapse,
       const tnsr::I<DataVector, 3, Frame::Inertial>& shift,
+
+      const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric,
+      const tnsr::II<DataVector, 3, Frame::Inertial>& inverse_spatial_metric,
 
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector,
       const tnsr::I<DataVector, 3, Frame::Inertial>& normal_vector,
@@ -191,6 +200,7 @@ class Hll final : public BoundaryCorrection {
       const tnsr::I<DataVector, 3, Frame::Inertial>&
           normal_dot_flux_tilde_b_int,
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_int,
+      const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric_int,
       const Scalar<DataVector>& largest_outgoing_char_speed_int,
       const Scalar<DataVector>& largest_ingoing_char_speed_int,
       const Scalar<DataVector>& tilde_d_ext,
@@ -207,6 +217,7 @@ class Hll final : public BoundaryCorrection {
       const tnsr::I<DataVector, 3, Frame::Inertial>&
           normal_dot_flux_tilde_b_ext,
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
+      const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric_ext,
       const Scalar<DataVector>& largest_outgoing_char_speed_ext,
       const Scalar<DataVector>& largest_ingoing_char_speed_ext,
       dg::Formulation dg_formulation);

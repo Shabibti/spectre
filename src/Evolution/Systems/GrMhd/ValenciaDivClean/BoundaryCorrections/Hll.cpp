@@ -41,6 +41,7 @@ double Hll::dg_package_data(
     const gsl::not_null<tnsr::I<DataVector, 3, Frame::Inertial>*>
         packaged_normal_dot_flux_tilde_b,
     const gsl::not_null<Scalar<DataVector>*> packaged_normal_dot_flux_tilde_phi,
+    const gsl::not_null<tnsr::ii<DataVector, 3, Frame::Inertial>*> packaged_spatial_metric,
     const gsl::not_null<Scalar<DataVector>*>
         packaged_largest_outgoing_char_speed,
     const gsl::not_null<Scalar<DataVector>*>
@@ -61,6 +62,9 @@ double Hll::dg_package_data(
 
     const Scalar<DataVector>& lapse,
     const tnsr::I<DataVector, 3, Frame::Inertial>& shift,
+
+    const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric,
+    const tnsr::II<DataVector, 3, Frame::Inertial>& inverse_spatial_metric,
 
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector,
     const tnsr::I<DataVector, 3, Frame::Inertial>& /*normal_vector*/,
@@ -104,6 +108,8 @@ double Hll::dg_package_data(
   normal_dot_flux(packaged_normal_dot_flux_tilde_phi, normal_covector,
                   flux_tilde_phi);
 
+//   *packaged_spatial_metric = spatial_metric;
+
   using std::max;
   return max(max(abs(get(*packaged_largest_outgoing_char_speed))),
              max(abs(get(*packaged_largest_ingoing_char_speed))));
@@ -130,6 +136,7 @@ void Hll::dg_boundary_terms(
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_dot_flux_tilde_s_int,
     const tnsr::I<DataVector, 3, Frame::Inertial>& normal_dot_flux_tilde_b_int,
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_int,
+    const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric_int,
     const Scalar<DataVector>& largest_outgoing_char_speed_int,
     const Scalar<DataVector>& largest_ingoing_char_speed_int,
     const Scalar<DataVector>& tilde_d_ext,
@@ -144,6 +151,7 @@ void Hll::dg_boundary_terms(
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_dot_flux_tilde_s_ext,
     const tnsr::I<DataVector, 3, Frame::Inertial>& normal_dot_flux_tilde_b_ext,
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
+    const tnsr::ii<DataVector, 3, Frame::Inertial>& spatial_metric_ext,
     const Scalar<DataVector>& largest_outgoing_char_speed_ext,
     const Scalar<DataVector>& largest_ingoing_char_speed_ext,
     const dg::Formulation dg_formulation) {
