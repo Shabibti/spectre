@@ -8,6 +8,7 @@
 
 #include "DataStructures/DataBox/Prefixes.hpp"
 #include "DataStructures/Tensor/TypeAliases.hpp"
+#include "Evolution/DiscontinuousGalerkin/NormalVectorTags.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/BoundaryCorrections/BoundaryCorrection.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/Tags.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/Formulation.hpp"
@@ -103,7 +104,8 @@ class Gforce final : public BoundaryCorrection {
                  ::Tags::NormalDotFlux<Tags::TildeTau>,
                  ::Tags::NormalDotFlux<Tags::TildeS<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildeB<Frame::Inertial>>,
-                 ::Tags::NormalDotFlux<Tags::TildePhi>, AbsCharSpeed>;
+                 ::Tags::NormalDotFlux<Tags::TildePhi>, AbsCharSpeed,
+                 evolution::dg::Tags::NormalCovector<3>>;
   using dg_package_data_temporary_tags = tmpl::list<
       gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>,
       hydro::Tags::SpatialVelocityOneForm<DataVector, 3, Frame::Inertial>>;
@@ -131,6 +133,8 @@ class Gforce final : public BoundaryCorrection {
           packaged_normal_dot_flux_tilde_b,
       gsl::not_null<Scalar<DataVector>*> packaged_normal_dot_flux_tilde_phi,
       gsl::not_null<Scalar<DataVector>*> packaged_abs_char_speed,
+      gsl::not_null<tnsr::i<DataVector, 3, Frame::Inertial>*>
+          packaged_normal_covector,
 
       const Scalar<DataVector>& tilde_d, const Scalar<DataVector>& tilde_ye,
       const Scalar<DataVector>& tilde_tau,
@@ -187,6 +191,7 @@ class Gforce final : public BoundaryCorrection {
           normal_dot_flux_tilde_b_int,
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_int,
       const Scalar<DataVector>& abs_char_speed_int,
+      const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_int,
       const Scalar<DataVector>& tilde_d_ext,
       const Scalar<DataVector>& tilde_ye_ext,
       const Scalar<DataVector>& tilde_tau_ext,
@@ -202,6 +207,7 @@ class Gforce final : public BoundaryCorrection {
           normal_dot_flux_tilde_b_ext,
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
       const Scalar<DataVector>& abs_char_speed_ext,
+      const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
       dg::Formulation dg_formulation);
 };
 
