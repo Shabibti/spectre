@@ -11,10 +11,16 @@
 #include "DataStructures/DataVector.hpp"
 #include "DataStructures/Tensor/EagerMath/DotProduct.hpp"
 #include "DataStructures/Tensor/Tensor.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/Fluxes.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/NewmanHamlin.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservative.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservativeOptions.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/Formulation.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/NormalDotFlux.hpp"
+#include "PointwiseFunctions/Hydro/EquationsOfState/IdealFluid.hpp"
 #include "Utilities/GenerateInstantiations.hpp"
 #include "Utilities/Gsl.hpp"
+#include "Utilities/MakeWithValue.hpp"
 
 namespace grmhd::ValenciaDivClean::BoundaryCorrections {
 Gforce::Gforce(CkMigrateMessage* /*unused*/) {}
@@ -156,76 +162,247 @@ void Gforce::dg_boundary_terms(
     const Scalar<DataVector>& abs_char_speed_ext,
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
     const dg::Formulation dg_formulation) {
-  (void)normal_covector_int;
-  (void)normal_covector_ext;
+  Scalar<DataVector> tilde_d_LW{};
+  Scalar<DataVector> tilde_ye_LW{};
+  Scalar<DataVector> tilde_tau_LW{};
+  tnsr::i<DataVector, 3, Frame::Inertial> tilde_s_LW{};
+  tnsr::I<DataVector, 3, Frame::Inertial> tilde_b_LW{};
+  Scalar<DataVector> tilde_phi_LW{};
+
+  get(tilde_d_LW) =
+      0.5 * (get(tilde_d_ext) + get(tilde_d_int)) -
+      0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+          (-get(normal_dot_flux_tilde_d_int) -
+           get(normal_dot_flux_tilde_d_ext));
+  get(tilde_ye_LW) =
+      0.5 * (get(tilde_ye_ext) + get(tilde_ye_int)) -
+      0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+          (-get(normal_dot_flux_tilde_ye_int) -
+           get(normal_dot_flux_tilde_ye_ext));
+  get(tilde_tau_LW) =
+      0.5 * (get(tilde_tau_ext) + get(tilde_tau_int)) -
+      0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+          (-get(normal_dot_flux_tilde_tau_int) -
+           get(normal_dot_flux_tilde_tau_ext));
+  get(tilde_phi_LW) =
+      0.5 * (get(tilde_phi_ext) + get(tilde_phi_int)) -
+      0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+          (-get(normal_dot_flux_tilde_phi_int) -
+           get(normal_dot_flux_tilde_phi_ext));
+  for (size_t i = 0; i < 3; ++i) {
+    tilde_s_LW.get(i) =
+        0.5 * (tilde_s_ext.get(i) + tilde_s_int.get(i)) -
+        0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+            (-normal_dot_flux_tilde_s_int.get(i) -
+             normal_dot_flux_tilde_s_ext.get(i));
+    tilde_b_LW.get(i) =
+        0.5 * (tilde_b_ext.get(i) + tilde_b_int.get(i)) -
+        0.5 * (1.0 / max(get(abs_char_speed_int), get(abs_char_speed_ext))) *
+            (-normal_dot_flux_tilde_b_int.get(i) -
+             normal_dot_flux_tilde_b_ext.get(i));
+  }
+
+  tnsr::ii<DataVector, 3, Frame::Inertial> spatial_metric =
+      make_with_value<tnsr::ii<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::II<DataVector, 3, Frame::Inertial> inv_spatial_metric =
+      make_with_value<tnsr::II<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  Scalar<DataVector> sqrt_det_spatial_metric =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 1.0);
+  Scalar<DataVector> lapse =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 1.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> shift =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+
+  for (size_t i = 0; i < 3; ++i) {
+    spatial_metric.get(i, i) = 1.0;
+    inv_spatial_metric.get(i, i) = 1.0;
+  }
+
+  Scalar<DataVector> rest_mass_density_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> electron_fraction_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> specific_internal_energy_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> spatial_velocity_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> magnetic_field_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  Scalar<DataVector> divergence_cleaning_field_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> lorentz_factor_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> pressure_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> temperature_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+
+  ::grmhd::ValenciaDivClean::PrimitiveFromConservative<
+      tmpl::list<
+          ::grmhd::ValenciaDivClean::PrimitiveRecoverySchemes::NewmanHamlin>,
+      true>::apply(make_not_null(&rest_mass_density_LW),
+                   make_not_null(&electron_fraction_LW),
+                   make_not_null(&specific_internal_energy_LW),
+                   make_not_null(&spatial_velocity_LW),
+                   make_not_null(&magnetic_field_LW),
+                   make_not_null(&divergence_cleaning_field_LW),
+                   make_not_null(&lorentz_factor_LW),
+                   make_not_null(&pressure_LW), make_not_null(&temperature_LW),
+                   tilde_d_LW, tilde_tau_LW, tilde_tau_LW, tilde_s_LW,
+                   tilde_b_LW, tilde_phi_LW, spatial_metric, inv_spatial_metric,
+                   sqrt_det_spatial_metric,
+                   EquationsOfState::IdealFluid<true>(1.6),
+                   ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions(
+                       0.0, 0.0, 1.0));
+
+  tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_d_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_ye_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_tau_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::Ij<DataVector, 3, Frame::Inertial> flux_tilde_s_LW =
+      make_with_value<tnsr::Ij<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::IJ<DataVector, 3, Frame::Inertial> flux_tilde_b_LW =
+      make_with_value<tnsr::IJ<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_phi_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+
+  ::grmhd::ValenciaDivClean::ComputeFluxes::apply(
+      make_not_null(&flux_tilde_d_LW), make_not_null(&flux_tilde_ye_LW),
+      make_not_null(&flux_tilde_tau_LW), make_not_null(&flux_tilde_s_LW),
+      make_not_null(&flux_tilde_b_LW), make_not_null(&flux_tilde_phi_LW),
+      tilde_d_LW, tilde_ye_LW, tilde_tau_LW, tilde_s_LW, tilde_b_LW,
+      tilde_phi_LW, lapse, shift, sqrt_det_spatial_metric, spatial_metric,
+      inv_spatial_metric, pressure_LW, spatial_velocity_LW, lorentz_factor_LW,
+      magnetic_field_LW);
+
+  tnsr::i<DataVector, 3, Frame::Inertial> average_normal_covector =
+      make_with_value<tnsr::i<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  for (size_t i = 0; i < 3; ++i) {
+    average_normal_covector.get(i) =
+        0.5 * normal_covector_int.get(i) + 0.5 * normal_covector_ext.get(i);
+  }
+
+  Scalar<DataVector> normal_dot_flux_tilde_d_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> normal_dot_flux_tilde_ye_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  Scalar<DataVector> normal_dot_flux_tilde_tau_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+  tnsr::i<DataVector, 3, Frame::Inertial> normal_dot_flux_tilde_s_LW =
+      make_with_value<tnsr::i<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  tnsr::I<DataVector, 3, Frame::Inertial> normal_dot_flux_tilde_b_LW =
+      make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
+          abs_char_speed_int, 0.0);
+  Scalar<DataVector> normal_dot_flux_tilde_phi_LW =
+      make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
+
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_d_LW),
+                  average_normal_covector, flux_tilde_d_LW);
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_ye_LW),
+                  average_normal_covector, flux_tilde_ye_LW);
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_tau_LW),
+                  average_normal_covector, flux_tilde_tau_LW);
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_s_LW),
+                  average_normal_covector, flux_tilde_s_LW);
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_b_LW),
+                  average_normal_covector, flux_tilde_b_LW);
+  normal_dot_flux(make_not_null(&normal_dot_flux_tilde_phi_LW),
+                  average_normal_covector, flux_tilde_phi_LW);
 
   if (dg_formulation == dg::Formulation::WeakInertial) {
     get(*boundary_correction_tilde_d) =
-        0.5 * (get(normal_dot_flux_tilde_d_int) -
-               get(normal_dot_flux_tilde_d_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_d_ext) - get(tilde_d_int));
+        0.5 * (0.5 * (get(normal_dot_flux_tilde_d_int) -
+                      get(normal_dot_flux_tilde_d_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_d_ext) - get(tilde_d_int))) +
+        0.5 * get(normal_dot_flux_tilde_d_LW);
     get(*boundary_correction_tilde_ye) =
-        0.5 * (get(normal_dot_flux_tilde_ye_int) -
-               get(normal_dot_flux_tilde_ye_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_ye_ext) - get(tilde_ye_int));
+        0.5 * (0.5 * (get(normal_dot_flux_tilde_ye_int) -
+                      get(normal_dot_flux_tilde_ye_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_ye_ext) - get(tilde_ye_int))) +
+        0.5 * get(normal_dot_flux_tilde_ye_LW);
     get(*boundary_correction_tilde_tau) =
-        0.5 * (get(normal_dot_flux_tilde_tau_int) -
-               get(normal_dot_flux_tilde_tau_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_tau_ext) - get(tilde_tau_int));
+        0.5 * (0.5 * (get(normal_dot_flux_tilde_tau_int) -
+                      get(normal_dot_flux_tilde_tau_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_tau_ext) - get(tilde_tau_int))) +
+        0.5 * get(normal_dot_flux_tilde_tau_LW);
     get(*boundary_correction_tilde_phi) =
-        0.5 * (get(normal_dot_flux_tilde_phi_int) -
-               get(normal_dot_flux_tilde_phi_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_phi_ext) - get(tilde_phi_int));
+        0.5 * (0.5 * (get(normal_dot_flux_tilde_phi_int) -
+                      get(normal_dot_flux_tilde_phi_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_phi_ext) - get(tilde_phi_int))) +
+        0.5 * get(normal_dot_flux_tilde_phi_LW);
 
     for (size_t i = 0; i < 3; ++i) {
       boundary_correction_tilde_s->get(i) =
-          0.5 * (normal_dot_flux_tilde_s_int.get(i) -
-                 normal_dot_flux_tilde_s_ext.get(i)) -
-          0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-              (tilde_s_ext.get(i) - tilde_s_int.get(i));
+          0.5 * (0.5 * (normal_dot_flux_tilde_s_int.get(i) -
+                        normal_dot_flux_tilde_s_ext.get(i)) -
+                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                     (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
+          0.5 * normal_dot_flux_tilde_s_LW.get(i);
       boundary_correction_tilde_b->get(i) =
-          0.5 * (normal_dot_flux_tilde_b_int.get(i) -
-                 normal_dot_flux_tilde_b_ext.get(i)) -
-          0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-              (tilde_b_ext.get(i) - tilde_b_int.get(i));
+          0.5 * (0.5 * (normal_dot_flux_tilde_b_int.get(i) -
+                        normal_dot_flux_tilde_b_ext.get(i)) -
+                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                     (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
+          0.5 * normal_dot_flux_tilde_b_LW.get(i);
     }
   } else {
     get(*boundary_correction_tilde_d) =
-        -0.5 * (get(normal_dot_flux_tilde_d_int) +
-                get(normal_dot_flux_tilde_d_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_d_ext) - get(tilde_d_int));
+        0.5 * (-0.5 * (get(normal_dot_flux_tilde_d_int) +
+                       get(normal_dot_flux_tilde_d_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_d_ext) - get(tilde_d_int))) +
+        0.5 * get(normal_dot_flux_tilde_d_LW);
     get(*boundary_correction_tilde_ye) =
-        -0.5 * (get(normal_dot_flux_tilde_ye_int) +
-                get(normal_dot_flux_tilde_ye_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_ye_ext) - get(tilde_ye_int));
+        0.5 * (-0.5 * (get(normal_dot_flux_tilde_ye_int) +
+                       get(normal_dot_flux_tilde_ye_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_ye_ext) - get(tilde_ye_int))) +
+        0.5 * get(normal_dot_flux_tilde_ye_LW);
     get(*boundary_correction_tilde_tau) =
-        -0.5 * (get(normal_dot_flux_tilde_tau_int) +
-                get(normal_dot_flux_tilde_tau_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_tau_ext) - get(tilde_tau_int));
+        0.5 * (-0.5 * (get(normal_dot_flux_tilde_tau_int) +
+                       get(normal_dot_flux_tilde_tau_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_tau_ext) - get(tilde_tau_int))) +
+        0.5 * get(normal_dot_flux_tilde_tau_LW);
     get(*boundary_correction_tilde_phi) =
-        -0.5 * (get(normal_dot_flux_tilde_phi_int) +
-                get(normal_dot_flux_tilde_phi_ext)) -
-        0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-            (get(tilde_phi_ext) - get(tilde_phi_int));
+        0.5 * (-0.5 * (get(normal_dot_flux_tilde_phi_int) +
+                       get(normal_dot_flux_tilde_phi_ext)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (get(tilde_phi_ext) - get(tilde_phi_int))) +
+        0.5 * get(normal_dot_flux_tilde_phi_LW);
 
     for (size_t i = 0; i < 3; ++i) {
       boundary_correction_tilde_s->get(i) =
-          -0.5 * (normal_dot_flux_tilde_s_int.get(i) +
-                  normal_dot_flux_tilde_s_ext.get(i)) -
-          0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-              (tilde_s_ext.get(i) - tilde_s_int.get(i));
+          0.5 * (-0.5 * (normal_dot_flux_tilde_s_int.get(i) +
+                         normal_dot_flux_tilde_s_ext.get(i)) -
+                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                     (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
+          0.5 * normal_dot_flux_tilde_s_LW.get(i);
       boundary_correction_tilde_b->get(i) =
-          -0.5 * (normal_dot_flux_tilde_b_int.get(i) +
-                  normal_dot_flux_tilde_b_ext.get(i)) -
-          0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-              (tilde_b_ext.get(i) - tilde_b_int.get(i));
+          0.5 * (-0.5 * (normal_dot_flux_tilde_b_int.get(i) +
+                         normal_dot_flux_tilde_b_ext.get(i)) -
+                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                     (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
+          0.5 * normal_dot_flux_tilde_b_LW.get(i);
     }
   }
 }
