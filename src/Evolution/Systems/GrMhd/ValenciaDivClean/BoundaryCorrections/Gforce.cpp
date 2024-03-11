@@ -256,9 +256,9 @@ void Gforce::dg_boundary_terms(
                    tilde_d_LW, tilde_tau_LW, tilde_tau_LW, tilde_s_LW,
                    tilde_b_LW, tilde_phi_LW, spatial_metric, inv_spatial_metric,
                    sqrt_det_spatial_metric,
-                   EquationsOfState::IdealFluid<true>(1.6),
+                   EquationsOfState::IdealFluid<true>(2.0),
                    ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions(
-                       0.0, 0.0, 1.0));
+                       1.0e-12, 1.0e-12, 10.0));
 
   tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_d_LW =
       make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
