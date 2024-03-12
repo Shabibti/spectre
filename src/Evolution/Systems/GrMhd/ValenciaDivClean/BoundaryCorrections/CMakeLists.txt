@@ -7,6 +7,7 @@ spectre_target_sources(
   PRIVATE
   Gforce.cpp
   Hll.cpp
+  LaxWendroff.cpp
   RegisterDerived.cpp
   Rusanov.cpp
   )
@@ -19,6 +20,7 @@ spectre_target_headers(
   Factory.hpp
   Gforce.hpp
   Hll.hpp
+  LaxWendroff.hpp
   RegisterDerived.hpp
   Rusanov.hpp
   )

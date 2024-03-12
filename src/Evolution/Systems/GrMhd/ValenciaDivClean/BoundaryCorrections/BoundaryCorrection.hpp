@@ -15,6 +15,7 @@ namespace BoundaryCorrections {
 /// \cond
 class Gforce;
 class Hll;
+class LaxWendroff;
 class Rusanov;
 /// \endcond
 
@@ -35,7 +36,7 @@ class BoundaryCorrection : public PUP::able {
   WRAPPED_PUPable_abstract(BoundaryCorrection);  // NOLINT
   /// \endcond
 
-  using creatable_classes = tmpl::list<Gforce, Hll, Rusanov>;
+  using creatable_classes = tmpl::list<Gforce, Hll, LaxWendroff, Rusanov>;
 
   virtual std::unique_ptr<BoundaryCorrection> get_clone() const = 0;
 };
