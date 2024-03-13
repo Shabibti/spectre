@@ -12,7 +12,7 @@
 #include "DataStructures/Tensor/EagerMath/DotProduct.hpp"
 #include "DataStructures/Tensor/Tensor.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/Fluxes.hpp"
-#include "Evolution/Systems/GrMhd/ValenciaDivClean/NewmanHamlin.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/KastaunEtAl.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservative.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservativeOptions.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/Formulation.hpp"
@@ -244,7 +244,7 @@ void LaxWendroff::dg_boundary_terms(
 
   ::grmhd::ValenciaDivClean::PrimitiveFromConservative<
       tmpl::list<
-          ::grmhd::ValenciaDivClean::PrimitiveRecoverySchemes::NewmanHamlin>,
+          ::grmhd::ValenciaDivClean::PrimitiveRecoverySchemes::KastaunEtAl>,
       true>::apply(make_not_null(&rest_mass_density_LW),
                    make_not_null(&electron_fraction_LW),
                    make_not_null(&specific_internal_energy_LW),
