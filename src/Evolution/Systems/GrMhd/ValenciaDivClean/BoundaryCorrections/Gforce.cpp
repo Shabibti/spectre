@@ -293,7 +293,7 @@ void Gforce::dg_boundary_terms(
           abs_char_speed_int, 0.0);
   for (size_t i = 0; i < 3; ++i) {
     average_normal_covector.get(i) =
-        0.5 * normal_covector_int.get(i) + 0.5 * normal_covector_ext.get(i);
+        0.5 * normal_covector_int.get(i) - 0.5 * normal_covector_ext.get(i);
   }
 
   Scalar<DataVector> normal_dot_flux_tilde_d_LW =
