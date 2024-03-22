@@ -23,13 +23,25 @@
 #include "Utilities/MakeWithValue.hpp"
 
 namespace grmhd::ValenciaDivClean::BoundaryCorrections {
+
+Gforce::Gforce(const double omega, const Options::Context& context)
+    : omega_(omega) {
+  if (omega_ < 0.0 || omega_ > 1.0) {
+    PARSE_ERROR(context, "The flux hybridization parameter ("
+                             << omega_ << ") must be between 0.0 and 1.0");
+  };
+}
+
 Gforce::Gforce(CkMigrateMessage* /*unused*/) {}
 
 std::unique_ptr<BoundaryCorrection> Gforce::get_clone() const {
   return std::make_unique<Gforce>(*this);
 }
 
-void Gforce::pup(PUP::er& p) { BoundaryCorrection::pup(p); }
+void Gforce::pup(PUP::er& p) {
+  BoundaryCorrection::pup(p);
+  p | omega_;
+}
 
 double Gforce::dg_package_data(
     const gsl::not_null<Scalar<DataVector>*> packaged_tilde_d,
@@ -161,15 +173,13 @@ void Gforce::dg_boundary_terms(
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
     const Scalar<DataVector>& abs_char_speed_ext,
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
-    const dg::Formulation dg_formulation) {
+    const dg::Formulation dg_formulation) const {
   Scalar<DataVector> tilde_d_LW{};
   Scalar<DataVector> tilde_ye_LW{};
   Scalar<DataVector> tilde_tau_LW{};
   tnsr::i<DataVector, 3, Frame::Inertial> tilde_s_LW{};
   tnsr::I<DataVector, 3, Frame::Inertial> tilde_b_LW{};
   Scalar<DataVector> tilde_phi_LW{};
-
-  const auto omega_g = 0.5;
 
   get(tilde_d_LW) =
       0.5 * (get(tilde_d_ext) + get(tilde_d_int)) -
@@ -328,83 +338,95 @@ void Gforce::dg_boundary_terms(
 
   if (dg_formulation == dg::Formulation::WeakInertial) {
     get(*boundary_correction_tilde_d) =
-        (1.0 - omega_g) * (0.5 * (get(normal_dot_flux_tilde_d_int) -
-                      get(normal_dot_flux_tilde_d_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_d_ext) - get(tilde_d_int))) +
-        omega_g * get(normal_dot_flux_tilde_d_LW);
+        (1.0 - omega_) *
+            (0.5 * (get(normal_dot_flux_tilde_d_int) -
+                    get(normal_dot_flux_tilde_d_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_d_ext) - get(tilde_d_int))) +
+        omega_ * get(normal_dot_flux_tilde_d_LW);
     get(*boundary_correction_tilde_ye) =
-        (1.0 - omega_g) * (0.5 * (get(normal_dot_flux_tilde_ye_int) -
-                      get(normal_dot_flux_tilde_ye_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_ye_ext) - get(tilde_ye_int))) +
-        omega_g * get(normal_dot_flux_tilde_ye_LW);
+        (1.0 - omega_) *
+            (0.5 * (get(normal_dot_flux_tilde_ye_int) -
+                    get(normal_dot_flux_tilde_ye_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_ye_ext) - get(tilde_ye_int))) +
+        omega_ * get(normal_dot_flux_tilde_ye_LW);
     get(*boundary_correction_tilde_tau) =
-        (1.0 - omega_g) * (0.5 * (get(normal_dot_flux_tilde_tau_int) -
-                      get(normal_dot_flux_tilde_tau_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_tau_ext) - get(tilde_tau_int))) +
-        omega_g * get(normal_dot_flux_tilde_tau_LW);
+        (1.0 - omega_) *
+            (0.5 * (get(normal_dot_flux_tilde_tau_int) -
+                    get(normal_dot_flux_tilde_tau_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_tau_ext) - get(tilde_tau_int))) +
+        omega_ * get(normal_dot_flux_tilde_tau_LW);
     get(*boundary_correction_tilde_phi) =
-        (1.0 - omega_g) * (0.5 * (get(normal_dot_flux_tilde_phi_int) -
-                      get(normal_dot_flux_tilde_phi_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_phi_ext) - get(tilde_phi_int))) +
-        omega_g * get(normal_dot_flux_tilde_phi_LW);
+        (1.0 - omega_) *
+            (0.5 * (get(normal_dot_flux_tilde_phi_int) -
+                    get(normal_dot_flux_tilde_phi_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_phi_ext) - get(tilde_phi_int))) +
+        omega_ * get(normal_dot_flux_tilde_phi_LW);
 
     for (size_t i = 0; i < 3; ++i) {
       boundary_correction_tilde_s->get(i) =
-          (1.0 - omega_g) * (0.5 * (normal_dot_flux_tilde_s_int.get(i) -
-                        normal_dot_flux_tilde_s_ext.get(i)) -
-                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                     (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
-          omega_g * normal_dot_flux_tilde_s_LW.get(i);
+          (1.0 - omega_) *
+              (0.5 * (normal_dot_flux_tilde_s_int.get(i) -
+                      normal_dot_flux_tilde_s_ext.get(i)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
+          omega_ * normal_dot_flux_tilde_s_LW.get(i);
       boundary_correction_tilde_b->get(i) =
-          (1.0 - omega_g) * (0.5 * (normal_dot_flux_tilde_b_int.get(i) -
-                        normal_dot_flux_tilde_b_ext.get(i)) -
-                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                     (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
-          omega_g * normal_dot_flux_tilde_b_LW.get(i);
+          (1.0 - omega_) *
+              (0.5 * (normal_dot_flux_tilde_b_int.get(i) -
+                      normal_dot_flux_tilde_b_ext.get(i)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
+          omega_ * normal_dot_flux_tilde_b_LW.get(i);
     }
   } else {
     get(*boundary_correction_tilde_d) =
-        (1.0 - omega_g) * (-0.5 * (get(normal_dot_flux_tilde_d_int) +
-                       get(normal_dot_flux_tilde_d_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_d_ext) - get(tilde_d_int))) +
-        omega_g * get(normal_dot_flux_tilde_d_LW);
+        (1.0 - omega_) *
+            (-0.5 * (get(normal_dot_flux_tilde_d_int) +
+                     get(normal_dot_flux_tilde_d_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_d_ext) - get(tilde_d_int))) +
+        omega_ * get(normal_dot_flux_tilde_d_LW);
     get(*boundary_correction_tilde_ye) =
-        (1.0 - omega_g) * (-0.5 * (get(normal_dot_flux_tilde_ye_int) +
-                       get(normal_dot_flux_tilde_ye_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_ye_ext) - get(tilde_ye_int))) +
-        omega_g * get(normal_dot_flux_tilde_ye_LW);
+        (1.0 - omega_) *
+            (-0.5 * (get(normal_dot_flux_tilde_ye_int) +
+                     get(normal_dot_flux_tilde_ye_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_ye_ext) - get(tilde_ye_int))) +
+        omega_ * get(normal_dot_flux_tilde_ye_LW);
     get(*boundary_correction_tilde_tau) =
-        (1.0 - omega_g) * (-0.5 * (get(normal_dot_flux_tilde_tau_int) +
-                       get(normal_dot_flux_tilde_tau_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_tau_ext) - get(tilde_tau_int))) +
-        omega_g * get(normal_dot_flux_tilde_tau_LW);
+        (1.0 - omega_) *
+            (-0.5 * (get(normal_dot_flux_tilde_tau_int) +
+                     get(normal_dot_flux_tilde_tau_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_tau_ext) - get(tilde_tau_int))) +
+        omega_ * get(normal_dot_flux_tilde_tau_LW);
     get(*boundary_correction_tilde_phi) =
-        (1.0 - omega_g) * (-0.5 * (get(normal_dot_flux_tilde_phi_int) +
-                       get(normal_dot_flux_tilde_phi_ext)) -
-               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                   (get(tilde_phi_ext) - get(tilde_phi_int))) +
-        omega_g * get(normal_dot_flux_tilde_phi_LW);
+        (1.0 - omega_) *
+            (-0.5 * (get(normal_dot_flux_tilde_phi_int) +
+                     get(normal_dot_flux_tilde_phi_ext)) -
+             0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                 (get(tilde_phi_ext) - get(tilde_phi_int))) +
+        omega_ * get(normal_dot_flux_tilde_phi_LW);
 
     for (size_t i = 0; i < 3; ++i) {
       boundary_correction_tilde_s->get(i) =
-          (1.0 - omega_g) * (-0.5 * (normal_dot_flux_tilde_s_int.get(i) +
-                         normal_dot_flux_tilde_s_ext.get(i)) -
-                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                     (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
-          omega_g * normal_dot_flux_tilde_s_LW.get(i);
+          (1.0 - omega_) *
+              (-0.5 * (normal_dot_flux_tilde_s_int.get(i) +
+                       normal_dot_flux_tilde_s_ext.get(i)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (tilde_s_ext.get(i) - tilde_s_int.get(i))) +
+          omega_ * normal_dot_flux_tilde_s_LW.get(i);
       boundary_correction_tilde_b->get(i) =
-          (1.0 - omega_g) * (-0.5 * (normal_dot_flux_tilde_b_int.get(i) +
-                         normal_dot_flux_tilde_b_ext.get(i)) -
-                 0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
-                     (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
-          omega_g * normal_dot_flux_tilde_b_LW.get(i);
+          (1.0 - omega_) *
+              (-0.5 * (normal_dot_flux_tilde_b_int.get(i) +
+                       normal_dot_flux_tilde_b_ext.get(i)) -
+               0.5 * max(get(abs_char_speed_int), get(abs_char_speed_ext)) *
+                   (tilde_b_ext.get(i) - tilde_b_int.get(i))) +
+          omega_ * normal_dot_flux_tilde_b_LW.get(i);
     }
   }
 }
