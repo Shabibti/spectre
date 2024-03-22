@@ -75,7 +75,14 @@ class Gforce final : public BoundaryCorrection {
   };
 
  public:
-  using options = tmpl::list<>;
+  struct Omega {
+    using type = double;
+    static constexpr Options::String help = {"Flux hybridization parameter."};
+    static type lower_bound() { return 0.0; }
+    static type upper_bound() { return 1.0; }
+  };
+
+  using options = tmpl::list<Omega>;
   static constexpr Options::String help = {
       "Computes the Rusanov or local Lax-Friedrichs boundary correction term "
       "for the GRMHD system."};
@@ -86,6 +93,8 @@ class Gforce final : public BoundaryCorrection {
   Gforce(Gforce&&) = default;
   Gforce& operator=(Gforce&&) = default;
   ~Gforce() override = default;
+
+  Gforce(double omega, const Options::Context& context = {});
 
   /// \cond
   explicit Gforce(CkMigrateMessage* /*unused*/);
@@ -167,7 +176,7 @@ class Gforce final : public BoundaryCorrection {
       const EquationsOfState::EquationOfState<true, 3>&
       /*equation_of_state*/);
 
-  static void dg_boundary_terms(
+  void dg_boundary_terms(
       gsl::not_null<Scalar<DataVector>*> boundary_correction_tilde_d,
       gsl::not_null<Scalar<DataVector>*> boundary_correction_tilde_ye,
       gsl::not_null<Scalar<DataVector>*> boundary_correction_tilde_tau,
@@ -208,7 +217,10 @@ class Gforce final : public BoundaryCorrection {
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
       const Scalar<DataVector>& abs_char_speed_ext,
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
-      dg::Formulation dg_formulation);
+      dg::Formulation dg_formulation) const;
+
+ private:
+  double omega_ = std::numeric_limits<double>::signaling_NaN();
 };
 
 bool operator==(const Gforce& lhs, const Gforce& rhs);
