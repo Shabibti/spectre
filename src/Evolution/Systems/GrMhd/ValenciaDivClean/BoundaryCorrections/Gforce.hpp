@@ -10,6 +10,7 @@
 #include "DataStructures/Tensor/TypeAliases.hpp"
 #include "Evolution/DiscontinuousGalerkin/NormalVectorTags.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/BoundaryCorrections/BoundaryCorrection.hpp"
+#include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservativeOptions.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/Tags.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/Formulation.hpp"
 #include "Options/String.hpp"
@@ -115,16 +116,13 @@ class Gforce final : public BoundaryCorrection {
                  ::Tags::NormalDotFlux<Tags::TildeB<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildePhi>, AbsCharSpeed,
                  evolution::dg::Tags::NormalCovector<3>>;
-  using dg_package_data_temporary_tags = tmpl::list<
-      gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>,
-      hydro::Tags::SpatialVelocityOneForm<DataVector, 3, Frame::Inertial>>;
-  using dg_package_data_primitive_tags =
-      tmpl::list<hydro::Tags::RestMassDensity<DataVector>,
-                 hydro::Tags::ElectronFraction<DataVector>,
-                 hydro::Tags::Temperature<DataVector>,
-                 hydro::Tags::SpatialVelocity<DataVector, 3>>;
-  using dg_package_data_volume_tags =
-      tmpl::list<hydro::Tags::GrmhdEquationOfState>;
+  using dg_package_data_temporary_tags =
+      tmpl::list<gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>>;
+  using dg_package_data_primitive_tags = tmpl::list<>;
+  using dg_package_data_volume_tags = tmpl::list<>;
+  using dg_boundary_terms_volume_tags = tmpl::list<
+      hydro::Tags::GrmhdEquationOfState,
+      ::grmhd::ValenciaDivClean::Tags::PrimitiveFromConservativeOptions>;
 
   static double dg_package_data(
       gsl::not_null<Scalar<DataVector>*> packaged_tilde_d,
@@ -160,21 +158,12 @@ class Gforce final : public BoundaryCorrection {
 
       const Scalar<DataVector>& lapse,
       const tnsr::I<DataVector, 3, Frame::Inertial>& shift,
-      const tnsr::i<DataVector, 3,
-                    Frame::Inertial>& /*spatial_velocity_one_form*/,
-
-      const Scalar<DataVector>& /*rest_mass_density*/,
-      const Scalar<DataVector>& /*electron_fraction*/,
-      const Scalar<DataVector>& /*temperature*/,
-      const tnsr::I<DataVector, 3, Frame::Inertial>& /*spatial_velocity*/,
 
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector,
       const tnsr::I<DataVector, 3, Frame::Inertial>& normal_vector,
       const std::optional<tnsr::I<DataVector, 3, Frame::Inertial>>&
       /*mesh_velocity*/,
-      const std::optional<Scalar<DataVector>>& normal_dot_mesh_velocity,
-      const EquationsOfState::EquationOfState<true, 3>&
-      /*equation_of_state*/);
+      const std::optional<Scalar<DataVector>>& normal_dot_mesh_velocity);
 
   void dg_boundary_terms(
       gsl::not_null<Scalar<DataVector>*> boundary_correction_tilde_d,
@@ -217,7 +206,10 @@ class Gforce final : public BoundaryCorrection {
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
       const Scalar<DataVector>& abs_char_speed_ext,
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
-      dg::Formulation dg_formulation) const;
+      dg::Formulation dg_formulation,
+      const EquationsOfState::EquationOfState<true, 3>& equation_of_state,
+      const ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions&
+          primitive_from_conservative_options) const;
 
  private:
   double omega_ = std::numeric_limits<double>::signaling_NaN();

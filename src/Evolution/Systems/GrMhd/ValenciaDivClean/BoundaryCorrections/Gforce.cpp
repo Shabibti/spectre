@@ -17,7 +17,6 @@
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/PrimitiveFromConservativeOptions.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/Formulation.hpp"
 #include "NumericalAlgorithms/DiscontinuousGalerkin/NormalDotFlux.hpp"
-#include "PointwiseFunctions/Hydro/EquationsOfState/IdealFluid.hpp"
 #include "Utilities/GenerateInstantiations.hpp"
 #include "Utilities/Gsl.hpp"
 #include "Utilities/MakeWithValue.hpp"
@@ -79,21 +78,12 @@ double Gforce::dg_package_data(
 
     const Scalar<DataVector>& lapse,
     const tnsr::I<DataVector, 3, Frame::Inertial>& shift,
-    const tnsr::i<DataVector, 3,
-                  Frame::Inertial>& /*spatial_velocity_one_form*/,
-
-    const Scalar<DataVector>& /*rest_mass_density*/,
-    const Scalar<DataVector>& /*electron_fraction*/,
-    const Scalar<DataVector>& /*temperature*/,
-    const tnsr::I<DataVector, 3, Frame::Inertial>& /*spatial_velocity*/,
 
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector,
     const tnsr::I<DataVector, 3, Frame::Inertial>& /*normal_vector*/,
     const std::optional<tnsr::I<DataVector, 3, Frame::Inertial>>&
     /*mesh_velocity*/,
-    const std::optional<Scalar<DataVector>>& normal_dot_mesh_velocity,
-    const EquationsOfState::EquationOfState<true, 3>&
-    /*equation_of_state*/) {
+    const std::optional<Scalar<DataVector>>& normal_dot_mesh_velocity) {
   {
     // Compute max abs char speed
     Scalar<DataVector>& shift_dot_normal = *packaged_tilde_d;
@@ -173,7 +163,10 @@ void Gforce::dg_boundary_terms(
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
     const Scalar<DataVector>& abs_char_speed_ext,
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
-    const dg::Formulation dg_formulation) const {
+    const dg::Formulation dg_formulation,
+    const EquationsOfState::EquationOfState<true, 3>& equation_of_state,
+    const ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions&
+        primitive_from_conservative_options) const {
   Scalar<DataVector> tilde_d_LW{};
   Scalar<DataVector> tilde_ye_LW{};
   Scalar<DataVector> tilde_tau_LW{};
@@ -267,10 +260,8 @@ void Gforce::dg_boundary_terms(
                    make_not_null(&pressure_LW), make_not_null(&temperature_LW),
                    tilde_d_LW, tilde_tau_LW, tilde_tau_LW, tilde_s_LW,
                    tilde_b_LW, tilde_phi_LW, spatial_metric, inv_spatial_metric,
-                   sqrt_det_spatial_metric,
-                   EquationsOfState::IdealFluid<true>(2.0),
-                   ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions(
-                       1.0e-12, 1.0e-12, 10.0));
+                   sqrt_det_spatial_metric, equation_of_state,
+                   primitive_from_conservative_options);
 
   tnsr::I<DataVector, 3, Frame::Inertial> flux_tilde_d_LW =
       make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
