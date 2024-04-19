@@ -115,9 +115,11 @@ class Gforce final : public BoundaryCorrection {
                  ::Tags::NormalDotFlux<Tags::TildeS<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildeB<Frame::Inertial>>,
                  ::Tags::NormalDotFlux<Tags::TildePhi>, AbsCharSpeed,
-                 evolution::dg::Tags::NormalCovector<3>>;
+                 evolution::dg::Tags::NormalCovector<3>,
+                 gr::Tags::InverseSpatialMetric<DataVector, 3>>;
   using dg_package_data_temporary_tags =
-      tmpl::list<gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>>;
+      tmpl::list<gr::Tags::Lapse<DataVector>, gr::Tags::Shift<DataVector, 3>,
+                 gr::Tags::InverseSpatialMetric<DataVector, 3>>;
   using dg_package_data_primitive_tags = tmpl::list<>;
   using dg_package_data_volume_tags = tmpl::list<>;
   using dg_boundary_terms_volume_tags = tmpl::list<
@@ -142,6 +144,8 @@ class Gforce final : public BoundaryCorrection {
       gsl::not_null<Scalar<DataVector>*> packaged_abs_char_speed,
       gsl::not_null<tnsr::i<DataVector, 3, Frame::Inertial>*>
           packaged_normal_covector,
+      gsl::not_null<tnsr::II<DataVector, 3, Frame::Inertial>*>
+          packaged_inv_spatial_metric,
 
       const Scalar<DataVector>& tilde_d, const Scalar<DataVector>& tilde_ye,
       const Scalar<DataVector>& tilde_tau,
@@ -158,6 +162,7 @@ class Gforce final : public BoundaryCorrection {
 
       const Scalar<DataVector>& lapse,
       const tnsr::I<DataVector, 3, Frame::Inertial>& shift,
+      const tnsr::II<DataVector, 3, Frame::Inertial>& inv_spatial_metric,
 
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector,
       const tnsr::I<DataVector, 3, Frame::Inertial>& normal_vector,
@@ -190,6 +195,7 @@ class Gforce final : public BoundaryCorrection {
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_int,
       const Scalar<DataVector>& abs_char_speed_int,
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_int,
+      const tnsr::II<DataVector, 3, Frame::Inertial>& inv_spatial_metric_int,
       const Scalar<DataVector>& tilde_d_ext,
       const Scalar<DataVector>& tilde_ye_ext,
       const Scalar<DataVector>& tilde_tau_ext,
@@ -206,6 +212,7 @@ class Gforce final : public BoundaryCorrection {
       const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
       const Scalar<DataVector>& abs_char_speed_ext,
       const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
+      const tnsr::II<DataVector, 3, Frame::Inertial>& inv_spatial_metric_ext,
       dg::Formulation dg_formulation,
       const EquationsOfState::EquationOfState<true, 3>& equation_of_state,
       const ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions&

@@ -709,56 +709,60 @@ void apply_boundary_conditions_on_all_external_faces(
   const auto& external_boundary_conditions =
       db::get<domain::Tags::ExternalBoundaryConditions<Dim>>(*box).at(
           element.id().block_id());
-  tmpl::for_each<derived_boundary_conditions>(
-      [&boundary_correction, &box, &element, &external_boundary_conditions,
-       &number_of_boundaries_left, &partial_derivs, &primitive_vars,
-       &temporaries, &volume_fluxes](auto derived_boundary_condition_v) {
-        using DerivedBoundaryCondition =
-            tmpl::type_from<decltype(derived_boundary_condition_v)>;
+  tmpl::for_each<
+      derived_boundary_conditions>([&boundary_correction, &box, &element,
+                                    &external_boundary_conditions,
+                                    &number_of_boundaries_left, &partial_derivs,
+                                    &primitive_vars, &temporaries,
+                                    &volume_fluxes](
+                                       auto derived_boundary_condition_v) {
+    using DerivedBoundaryCondition =
+        tmpl::type_from<decltype(derived_boundary_condition_v)>;
 
-        if (number_of_boundaries_left == 0) {
-          return;
-        }
+    if (number_of_boundaries_left == 0) {
+      return;
+    }
 
-        for (const Direction<Dim>& direction : element.external_boundaries()) {
-          const auto& boundary_condition =
-              *external_boundary_conditions.at(direction);
-          if (typeid(boundary_condition) == typeid(DerivedBoundaryCondition)) {
-            detail::apply_boundary_condition_on_face<System>(
-                box, boundary_correction,
-                dynamic_cast<const DerivedBoundaryCondition&>(
-                    boundary_condition),
-                direction, db::get<variables_tag>(*box), volume_fluxes,
-                partial_derivs, temporaries, primitive_vars,
-                db::get<::dg::Tags::Formulation>(*box),
-                db::get<::domain::Tags::Mesh<Dim>>(*box),
-                db::get<::domain::Tags::Element<Dim>>(*box),
-                db::get<::domain::Tags::ElementMap<Dim, Frame::Grid>>(*box),
-                db::get<::domain::CoordinateMaps::Tags::CoordinateMap<
-                    Dim, Frame::Grid, Frame::Inertial>>(*box),
-                db::get<::Tags::Time>(*box),
-                db::get<::domain::Tags::FunctionsOfTime>(*box),
-                db::get<::domain::Tags::MeshVelocity<Dim>>(*box),
-                db::get<::domain::Tags::InverseJacobian<
-                    Dim, Frame::ElementLogical, Frame::Inertial>>(*box),
-                db::get<::domain::Tags::DetInvJacobian<Frame::ElementLogical,
-                                                       Frame::Inertial>>(*box),
-                typename BoundaryCorrection::dg_package_data_volume_tags{},
-                typename BoundaryCorrection::dg_package_field_tags{},
-                typename BoundaryCorrection::dg_boundary_terms_volume_tags{},
-                tmpl::append<
-                    typename variables_tag::tags_list, fluxes_tags,
+    for (const Direction<Dim>& direction : element.external_boundaries()) {
+      const auto& boundary_condition =
+          *external_boundary_conditions.at(direction);
+      if (typeid(boundary_condition) == typeid(DerivedBoundaryCondition)) {
+        detail::apply_boundary_condition_on_face<System>(
+            box, boundary_correction,
+            dynamic_cast<const DerivedBoundaryCondition&>(boundary_condition),
+            direction, db::get<variables_tag>(*box), volume_fluxes,
+            partial_derivs, temporaries, primitive_vars,
+            db::get<::dg::Tags::Formulation>(*box),
+            db::get<::domain::Tags::Mesh<Dim>>(*box),
+            db::get<::domain::Tags::Element<Dim>>(*box),
+            db::get<::domain::Tags::ElementMap<Dim, Frame::Grid>>(*box),
+            db::get<::domain::CoordinateMaps::Tags::CoordinateMap<
+                Dim, Frame::Grid, Frame::Inertial>>(*box),
+            db::get<::Tags::Time>(*box),
+            db::get<::domain::Tags::FunctionsOfTime>(*box),
+            db::get<::domain::Tags::MeshVelocity<Dim>>(*box),
+            db::get<::domain::Tags::InverseJacobian<Dim, Frame::ElementLogical,
+                                                    Frame::Inertial>>(*box),
+            db::get<::domain::Tags::DetInvJacobian<Frame::ElementLogical,
+                                                   Frame::Inertial>>(*box),
+            typename BoundaryCorrection::dg_package_data_volume_tags{},
+            typename BoundaryCorrection::dg_package_field_tags{},
+            typename BoundaryCorrection::dg_boundary_terms_volume_tags{},
+            tmpl::append<
+                typename variables_tag::tags_list, fluxes_tags,
+                tmpl::remove<
                     typename BoundaryCorrection::dg_package_data_temporary_tags,
-                    typename detail::get_primitive_vars<
-                        System::has_primitive_and_conservative_vars>::
-                        template f<BoundaryCorrection>>{},
-                typename DerivedBoundaryCondition::dg_gridless_tags{});
-            --number_of_boundaries_left;
-          }
-          if (number_of_boundaries_left == 0) {
-            return;
-          }
-        }
-      });
+                    tmpl::front<detail::inverse_spatial_metric_tag<System>>>,
+                typename detail::get_primitive_vars<
+                    System::has_primitive_and_conservative_vars>::
+                    template f<BoundaryCorrection>>{},
+            typename DerivedBoundaryCondition::dg_gridless_tags{});
+        --number_of_boundaries_left;
+      }
+      if (number_of_boundaries_left == 0) {
+        return;
+      }
+    }
+  });
 }
 }  // namespace evolution::dg::Actions::detail

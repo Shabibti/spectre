@@ -47,6 +47,7 @@
 #include "NumericalAlgorithms/FiniteDifference/HighOrderFluxCorrection.hpp"
 #include "NumericalAlgorithms/Spectral/Mesh.hpp"
 #include "Parallel/Tags/Metavariables.hpp"
+#include "PointwiseFunctions/GeneralRelativity/Tags.hpp"
 #include "PointwiseFunctions/Hydro/Tags.hpp"
 #include "Utilities/CallWithDynamicType.hpp"
 #include "Utilities/ErrorHandling/Assert.hpp"
@@ -175,7 +176,8 @@ struct TimeDerivative {
           using dg_package_data_argument_tags = tmpl::append<
               evolved_vars_tags, recons_prim_tags, fluxes_tags,
               tmpl::remove_duplicates<tmpl::push_back<
-                  dg_package_data_temporary_tags,
+                  tmpl::remove<dg_package_data_temporary_tags,
+                               gr::Tags::InverseSpatialMetric<DataVector, 3>>,
                   gr::Tags::SpatialMetric<DataVector, 3>,
                   gr::Tags::SqrtDetSpatialMetric<DataVector>,
                   gr::Tags::InverseSpatialMetric<DataVector, 3>,
@@ -276,34 +278,34 @@ struct TimeDerivative {
                         mesh_velocity_dg.value().get(j), dg_mesh,
                         face_mesh_extents, i);
               }
-              tmpl::for_each<evolved_vars_tags>([&vars_upper_face,
-                                                 &vars_lower_face,
-                                                 &mesh_velocity_on_face](
-                                                    auto tag_v) {
-                using tag = tmpl::type_from<decltype(tag_v)>;
-                using flux_tag =
-                    ::Tags::Flux<tag, tmpl::size_t<3>, Frame::Inertial>;
-                using FluxTensor = typename flux_tag::type;
-                const auto& var_upper = get<tag>(vars_upper_face);
-                const auto& var_lower = get<tag>(vars_lower_face);
-                auto& flux_upper = get<flux_tag>(vars_upper_face);
-                auto& flux_lower = get<flux_tag>(vars_lower_face);
-                for (size_t storage_index = 0; storage_index < var_upper.size();
-                     ++storage_index) {
-                  const auto tensor_index =
-                      var_upper.get_tensor_index(storage_index);
-                  for (size_t j = 0; j < 3; j++) {
-                    const auto flux_storage_index =
-                        FluxTensor::get_storage_index(prepend(tensor_index, j));
-                    flux_upper[flux_storage_index] -=
-                        mesh_velocity_on_face.value().get(j) *
-                        var_upper[storage_index];
-                    flux_lower[flux_storage_index] -=
-                        mesh_velocity_on_face.value().get(j) *
-                        var_lower[storage_index];
-                  }
-                }
-              });
+              tmpl::for_each<evolved_vars_tags>(
+                  [&vars_upper_face, &vars_lower_face,
+                   &mesh_velocity_on_face](auto tag_v) {
+                    using tag = tmpl::type_from<decltype(tag_v)>;
+                    using flux_tag =
+                        ::Tags::Flux<tag, tmpl::size_t<3>, Frame::Inertial>;
+                    using FluxTensor = typename flux_tag::type;
+                    const auto& var_upper = get<tag>(vars_upper_face);
+                    const auto& var_lower = get<tag>(vars_lower_face);
+                    auto& flux_upper = get<flux_tag>(vars_upper_face);
+                    auto& flux_lower = get<flux_tag>(vars_lower_face);
+                    for (size_t storage_index = 0;
+                         storage_index < var_upper.size(); ++storage_index) {
+                      const auto tensor_index =
+                          var_upper.get_tensor_index(storage_index);
+                      for (size_t j = 0; j < 3; j++) {
+                        const auto flux_storage_index =
+                            FluxTensor::get_storage_index(
+                                prepend(tensor_index, j));
+                        flux_upper[flux_storage_index] -=
+                            mesh_velocity_on_face.value().get(j) *
+                            var_upper[storage_index];
+                        flux_lower[flux_storage_index] -=
+                            mesh_velocity_on_face.value().get(j) *
+                            var_lower[storage_index];
+                      }
+                    }
+                  });
             }
 
             // Normal vectors in curved spacetime normalized by inverse
