@@ -62,6 +62,9 @@ double Gforce::dg_package_data(
     const gsl::not_null<Scalar<DataVector>*> packaged_abs_char_speed,
     const gsl::not_null<tnsr::i<DataVector, 3, Frame::Inertial>*>
         packaged_normal_covector,
+    const gsl::not_null<Scalar<DataVector>*> packaged_lapse,
+    const gsl::not_null<tnsr::I<DataVector, 3, Frame::Inertial>*>
+        packaged_shift,
     const gsl::not_null<tnsr::II<DataVector, 3, Frame::Inertial>*>
         packaged_inv_spatial_metric,
 
@@ -125,6 +128,8 @@ double Gforce::dg_package_data(
                   flux_tilde_phi);
 
   *packaged_normal_covector = normal_covector;
+  *packaged_lapse = lapse;
+  *packaged_shift = shift;
   *packaged_inv_spatial_metric = inv_spatial_metric;
 
   return max(get(*packaged_abs_char_speed));
@@ -153,6 +158,8 @@ void Gforce::dg_boundary_terms(
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_int,
     const Scalar<DataVector>& abs_char_speed_int,
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_int,
+    const Scalar<DataVector>& lapse_int,
+    const tnsr::I<DataVector, 3, Frame::Inertial>& shift_int,
     const tnsr::II<DataVector, 3, Frame::Inertial>& inv_spatial_metric_int,
     const Scalar<DataVector>& tilde_d_ext,
     const Scalar<DataVector>& tilde_ye_ext,
@@ -168,11 +175,17 @@ void Gforce::dg_boundary_terms(
     const Scalar<DataVector>& normal_dot_flux_tilde_phi_ext,
     const Scalar<DataVector>& abs_char_speed_ext,
     const tnsr::i<DataVector, 3, Frame::Inertial>& normal_covector_ext,
+    const Scalar<DataVector>& lapse_ext,
+    const tnsr::I<DataVector, 3, Frame::Inertial>& shift_ext,
     const tnsr::II<DataVector, 3, Frame::Inertial>& inv_spatial_metric_ext,
     const dg::Formulation dg_formulation,
     const EquationsOfState::EquationOfState<true, 3>& equation_of_state,
     const ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions&
         primitive_from_conservative_options) const {
+  (void)lapse_int;
+  (void)lapse_ext;
+  (void)shift_int;
+  (void)shift_ext;
   (void)inv_spatial_metric_int;
   (void)inv_spatial_metric_ext;
 
