@@ -258,7 +258,7 @@ void Gforce::dg_boundary_terms(
                    make_not_null(&divergence_cleaning_field_LW),
                    make_not_null(&lorentz_factor_LW),
                    make_not_null(&pressure_LW), make_not_null(&temperature_LW),
-                   tilde_d_LW, tilde_tau_LW, tilde_tau_LW, tilde_s_LW,
+                   tilde_d_LW, tilde_ye_LW, tilde_tau_LW, tilde_s_LW,
                    tilde_b_LW, tilde_phi_LW, spatial_metric, inv_spatial_metric,
                    sqrt_det_spatial_metric, equation_of_state,
                    primitive_from_conservative_options);
