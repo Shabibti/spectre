@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "DataStructures/DataVector.hpp"
+#include "DataStructures/Tensor/EagerMath/DeterminantAndInverse.hpp"
 #include "DataStructures/Tensor/EagerMath/DotProduct.hpp"
 #include "DataStructures/Tensor/Tensor.hpp"
 #include "Evolution/Systems/GrMhd/ValenciaDivClean/Fluxes.hpp"
@@ -182,13 +183,6 @@ void Gforce::dg_boundary_terms(
     const EquationsOfState::EquationOfState<true, 3>& equation_of_state,
     const ::grmhd::ValenciaDivClean::PrimitiveFromConservativeOptions&
         primitive_from_conservative_options) const {
-  (void)lapse_int;
-  (void)lapse_ext;
-  (void)shift_int;
-  (void)shift_ext;
-  (void)inv_spatial_metric_int;
-  (void)inv_spatial_metric_ext;
-
   Scalar<DataVector> tilde_d_LW{};
   Scalar<DataVector> tilde_ye_LW{};
   Scalar<DataVector> tilde_tau_LW{};
@@ -243,10 +237,23 @@ void Gforce::dg_boundary_terms(
       make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
           abs_char_speed_int, 0.0);
 
+  get(lapse) = 0.5 * get(lapse_int) + 0.5 * get(lapse_ext);
+
   for (size_t i = 0; i < 3; ++i) {
-    spatial_metric.get(i, i) = 1.0;
-    inv_spatial_metric.get(i, i) = 1.0;
+    shift.get(i) = 0.5 * shift_int.get(i) + 0.5 * shift_ext.get(i);
+
+    for (size_t j = 0; j < 3; ++j) {
+      inv_spatial_metric.get(i, j) = 0.5 * inv_spatial_metric_int.get(i, j) +
+                                     0.5 * inv_spatial_metric_ext.get(i, j);
+      inv_spatial_metric.get(j, i) = 0.5 * inv_spatial_metric_int.get(j, i) +
+                                     0.5 * inv_spatial_metric_ext.get(j, i);
+    }
   }
+
+  determinant_and_inverse(make_not_null(&sqrt_det_spatial_metric),
+                          make_not_null(&spatial_metric), inv_spatial_metric);
+
+  get(sqrt_det_spatial_metric) = sqrt(get(sqrt_det_spatial_metric));
 
   Scalar<DataVector> rest_mass_density_LW =
       make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
