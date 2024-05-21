@@ -551,6 +551,7 @@ SPECTRE_TEST_CASE(
             "  AnalyticPrescription:\n"
             "      GeneralizedHarmonic(MagnetizedTovStar):\n"
             "        CentralDensity: 1.28e-3\n"
+            "        VelocityPerturbation: 0.0\n"
             "        EquationOfState:\n"
             "          PolytropicFluid:\n"
             "            PolytropicConstant: 100.0\n"
@@ -566,7 +567,7 @@ SPECTRE_TEST_CASE(
             ->get_clone();
     const gh::Solutions::WrappedGr<grmhd::AnalyticData::MagnetizedTovStar>
         analytic_solution_or_data{
-            1.28e-3,
+            1.28e-3, 0.0,
             std::make_unique<EquationsOfState::PolytropicFluid<true>>(100.0,
                                                                       2.0),
             RelativisticEuler::Solutions::TovCoordinates::Schwarzschild,

@@ -28,6 +28,7 @@ ResourceInfo:
 Background: &solution
   TovStar:
     CentralDensity: 1.e-3
+    VelocityPerturbation: 0.0
     EquationOfState:
       PolytropicFluid:
         PolytropicConstant: 1.

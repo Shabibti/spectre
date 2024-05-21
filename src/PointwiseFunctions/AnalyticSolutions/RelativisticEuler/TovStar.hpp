@@ -139,16 +139,19 @@ struct TovVariables {
   TovVariables(
       const tnsr::I<DataType, 3>& local_coords, const DataType& local_radius,
       const RelativisticEuler::Solutions::TovSolution& local_radial_solution,
-      const EquationsOfState::EquationOfState<true, 1>& local_eos)
+      const EquationsOfState::EquationOfState<true, 1>& local_eos,
+      const double perturb)
       : coords(local_coords),
         radius(local_radius),
         radial_solution(local_radial_solution),
-        eos(local_eos) {}
+        eos(local_eos),
+        perturbation(perturb) {}
 
   const tnsr::I<DataType, 3>& coords;
   const DataType& radius;
   const RelativisticEuler::Solutions::TovSolution& radial_solution;
   const EquationsOfState::EquationOfState<true, 1>& eos;
+  const double perturbation;
 
   void operator()(gsl::not_null<Scalar<DataType>*> mass_over_radius,
                   gsl::not_null<Cache*> cache,
@@ -336,6 +339,13 @@ class TovStar : public virtual evolution::initial_data::InitialData,
     static type lower_bound() { return 0.; }
   };
 
+  struct VelocityPerturbation {
+    using type = double;
+    static constexpr Options::String help = {
+        "Magnitude of radially symmetric velocity perturbation for driving "
+        "oscillations."};
+  };
+
   /// Areal (Schwarzschild) or isotropic coordinates
   struct Coordinates {
     using type = RelativisticEuler::Solutions::TovCoordinates;
@@ -346,7 +356,7 @@ class TovStar : public virtual evolution::initial_data::InitialData,
   static constexpr size_t volume_dim = 3_st;
 
   using options =
-      tmpl::list<CentralDensity,
+      tmpl::list<CentralDensity, VelocityPerturbation,
                  hydro::OptionTags::InitialDataEquationOfState<true, 1>,
                  Coordinates>;
 
@@ -361,7 +371,7 @@ class TovStar : public virtual evolution::initial_data::InitialData,
   TovStar(TovStar&& /*rhs*/) = default;
   TovStar& operator=(TovStar&& /*rhs*/) = default;
   ~TovStar() override = default;
-  TovStar(double central_rest_mass_density,
+  TovStar(double central_rest_mass_density, double velocity_perturbation,
           std::unique_ptr<EquationsOfState::EquationOfState<true, 1>>
               equation_of_state,
           const RelativisticEuler::Solutions::TovCoordinates coordinate_system =
@@ -420,7 +430,11 @@ class TovStar : public virtual evolution::initial_data::InitialData,
           VarsComputer<DataType, tov_detail::StarRegion::Exterior>;
       typename ExteriorVarsComputer::Cache cache{get_size(radius)};
       ExteriorVarsComputer computer{
-          x, radius, radial_solution_, *equation_of_state_,
+          x,
+          radius,
+          radial_solution_,
+          *equation_of_state_,
+          velocity_perturbation_,
           std::forward<VarsComputerArgs>(vars_computer_args)...};
       return {cache.get_var(computer, Tags{})...};
     } else if (max(radius) <= outer_radius and
@@ -430,7 +444,11 @@ class TovStar : public virtual evolution::initial_data::InitialData,
           VarsComputer<DataType, tov_detail::StarRegion::Interior>;
       typename InteriorVarsComputer::Cache cache{get_size(radius)};
       InteriorVarsComputer computer{
-          x, radius, radial_solution_, *equation_of_state_,
+          x,
+          radius,
+          radial_solution_,
+          *equation_of_state_,
+          velocity_perturbation_,
           std::forward<VarsComputerArgs>(vars_computer_args)...};
       return {cache.get_var(computer, Tags{})...};
     } else {
@@ -472,22 +490,31 @@ class TovStar : public virtual evolution::initial_data::InitialData,
         if (get_element(radius, i) > outer_radius) {
           typename ExteriorVarsComputer::Cache cache{1};
           ExteriorVarsComputer computer{
-              x_i, get_element(radius, i), radial_solution_,
+              x_i,
+              get_element(radius, i),
+              radial_solution_,
               *equation_of_state_,
+              velocity_perturbation_,
               std::forward<VarsComputerArgs>(vars_computer_args)...};
           expand_pack(get_var(i, cache, computer, Tags{})...);
         } else if (get_element(radius, i) > center_radius_cutoff) {
           typename InteriorVarsComputer::Cache cache{1};
           InteriorVarsComputer computer{
-              x_i, get_element(radius, i), radial_solution_,
+              x_i,
+              get_element(radius, i),
+              radial_solution_,
               *equation_of_state_,
+              velocity_perturbation_,
               std::forward<VarsComputerArgs>(vars_computer_args)...};
           expand_pack(get_var(i, cache, computer, Tags{})...);
         } else {
           typename CenterVarsComputer::Cache cache{1};
           CenterVarsComputer computer{
-              x_i, get_element(radius, i), radial_solution_,
+              x_i,
+              get_element(radius, i),
+              radial_solution_,
               *equation_of_state_,
+              velocity_perturbation_,
               std::forward<VarsComputerArgs>(vars_computer_args)...};
           expand_pack(get_var(i, cache, computer, Tags{})...);
         }
@@ -521,6 +548,7 @@ class TovStar : public virtual evolution::initial_data::InitialData,
 
   double central_rest_mass_density_ =
       std::numeric_limits<double>::signaling_NaN();
+  double velocity_perturbation_ = std::numeric_limits<double>::signaling_NaN();
   std::unique_ptr<equation_of_state_type> equation_of_state_;
   RelativisticEuler::Solutions::TovCoordinates coordinate_system_{};
   RelativisticEuler::Solutions::TovSolution radial_solution_{};

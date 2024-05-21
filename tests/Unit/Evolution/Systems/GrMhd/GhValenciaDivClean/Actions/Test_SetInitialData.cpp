@@ -161,7 +161,7 @@ void test_set_initial_data(
 
   // We get test data from a TOV solution
   TovStar tov_star{
-      1.e-3,
+      1.e-3, 0.0,
       std::make_unique<EquationsOfState::PolytropicFluid<true>>(100., 2.)};
   const double star_radius = tov_star.radial_solution().outer_radius();
   const auto eos = tov_star.equation_of_state().promote_to_3d_eos();
@@ -381,11 +381,12 @@ SPECTRE_TEST_CASE("Unit.Evolution.Systems.GhValenciaDivClean.SetInitialData",
         "  DensityCutoff: 1.e-14",
         true, active_grid);
     test_set_initial_data(
-        TovStar{1.e-3,
+        TovStar{1.e-3, 0.0,
                 std::make_unique<EquationsOfState::PolytropicFluid<true>>(100.,
                                                                           2.)},
         "GeneralizedHarmonic(TovStar):\n"
         "  CentralDensity: 1.e-3\n"
+        "  VelocityPerturbation: 0.0\n"
         "  EquationOfState:\n"
         "    PolytropicFluid:\n"
         "      PolytropicConstant: 100.\n"

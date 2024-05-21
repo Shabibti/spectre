@@ -114,7 +114,7 @@ double test(const size_t num_dg_pts, std::optional<double> expansion_velocity,
       domain::CoordinateMaps::ProductOf3Maps<Affine, Affine, Affine>;
 
   const gh::Solutions::WrappedGr<::RelativisticEuler::Solutions::TovStar> soln{
-      1.28e-3,
+      1.28e-3, 0.0,
       std::make_unique<EquationsOfState::PolytropicFluid<true>>(100.0, 2.0)
           ->get_clone(),
       RelativisticEuler::Solutions::TovCoordinates::Schwarzschild};
@@ -267,8 +267,7 @@ double test(const size_t num_dg_pts, std::optional<double> expansion_velocity,
       neighbor_data{};
   using prims_to_reconstruct_tags = grmhd::GhValenciaDivClean::Tags::
       primitive_grmhd_and_spacetime_reconstruction_tags;
-  for (const auto & [ direction, neighbors_in_direction ] :
-       element.neighbors()) {
+  for (const auto& [direction, neighbors_in_direction] : element.neighbors()) {
     auto neighbor_logical_coords = logical_coordinates(subcell_mesh);
     neighbor_logical_coords.get(direction.dimension()) +=
         2.0 * direction.sign();

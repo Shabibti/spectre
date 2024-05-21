@@ -112,7 +112,7 @@ double test(const size_t num_dg_pts) {
           domain::CoordinateMaps::Identity<3>{});
 
   const gh::Solutions::WrappedGr<::RelativisticEuler::Solutions::TovStar> soln{
-      1.28e-3,
+      1.28e-3, 0.0,
       std::make_unique<EquationsOfState::PolytropicFluid<true>>(100.0, 2.0)
           ->get_clone(),
       RelativisticEuler::Solutions::TovCoordinates::Schwarzschild};

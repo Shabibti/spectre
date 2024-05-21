@@ -41,6 +41,7 @@ struct MagnetizedTovVariables
   using Base::operator();
   using Base::coords;
   using Base::eos;
+  using Base::perturbation;
   using Base::radial_solution;
   using Base::radius;
 
@@ -52,10 +53,11 @@ struct MagnetizedTovVariables
       const tnsr::I<DataType, 3>& local_x, const DataType& local_radius,
       const RelativisticEuler::Solutions::TovSolution& local_radial_solution,
       const EquationsOfState::EquationOfState<true, 1>& local_eos,
+      const double perturb,
       const std::vector<std::unique_ptr<
           grmhd::AnalyticData::InitialMagneticFields::InitialMagneticField>>&
           mag_fields)
-      : Base(local_x, local_radius, local_radial_solution, local_eos),
+      : Base(local_x, local_radius, local_radial_solution, local_eos, perturb),
         magnetic_fields(mag_fields) {}
 
   void operator()(
@@ -145,7 +147,7 @@ class MagnetizedTovStar : public virtual evolution::initial_data::InitialData,
   ~MagnetizedTovStar() override;
 
   MagnetizedTovStar(
-      double central_rest_mass_density,
+      double central_rest_mass_density, double velocity_perturbation,
       std::unique_ptr<EquationsOfState::EquationOfState<true, 1>>
           equation_of_state,
       RelativisticEuler::Solutions::TovCoordinates coordinate_system,

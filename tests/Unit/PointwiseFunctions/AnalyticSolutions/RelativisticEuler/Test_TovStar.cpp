@@ -77,6 +77,7 @@ void test_tov_star(const TovCoordinates coord_system) {
           RelativisticEuler::Solutions::TovStar>(
           "TovStar:\n"
           "  CentralDensity: 1.0e-3\n"
+          "  VelocityPerturbation: 0.0\n"
           "  EquationOfState:\n"
           "    PolytropicFluid:\n"
           "      PolytropicConstant: 100.0\n"
@@ -92,7 +93,7 @@ void test_tov_star(const TovCoordinates coord_system) {
   {
     INFO("Semantics");
     CHECK(solution ==
-          TovStar{1.0e-3,
+          TovStar{1.0e-3, 0.0,
                   std::make_unique<EquationsOfState::PolytropicFluid<true>>(
                       100.0, 2.0),
                   coord_system});
@@ -110,7 +111,7 @@ void test_tov_star(const TovCoordinates coord_system) {
           custom_approx(10.0473500683));
     // Check a second solution
     TovStar second_solution{
-        1.0e-3,
+        1.0e-3, 0.0,
         std::make_unique<EquationsOfState::PolytropicFluid<true>>(8.0, 2.0)};
     CHECK(second_solution.radial_solution().outer_radius() ==
           custom_approx(3.4685521362));

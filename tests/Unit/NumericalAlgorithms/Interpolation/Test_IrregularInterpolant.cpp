@@ -356,7 +356,7 @@ void test_tov() {
     const auto x = element_map(xi);
 
     RelativisticEuler::Solutions::TovStar tov_star(
-        central_density,
+        central_density, 0.0,
         std::make_unique<EquationsOfState::PolytropicFluid<true>>(100.0, 2.0));
 
     using rho_tag = hydro::Tags::RestMassDensity<DataVector>;

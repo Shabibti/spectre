@@ -339,7 +339,8 @@ SPECTRE_TEST_CASE(
   pypp::SetupLocalPythonEnvironment local_python_env{
       "PointwiseFunctions/AnalyticSolutions/"};
   const SolutionForTest solution{RelativisticEuler::Solutions::TovStar{
-      1.28e-3, EquationsOfState::PolytropicFluid<true>{100.0, 2.0}.get_clone(),
+      1.28e-3, 0.0,
+      EquationsOfState::PolytropicFluid<true>{100.0, 2.0}.get_clone(),
       RelativisticEuler::Solutions::TovCoordinates::Schwarzschild}};
   test(
       grmhd::GhValenciaDivClean::BoundaryConditions::DirichletAnalytic{

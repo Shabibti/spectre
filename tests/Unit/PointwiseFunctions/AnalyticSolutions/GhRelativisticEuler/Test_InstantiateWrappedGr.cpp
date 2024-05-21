@@ -30,10 +30,10 @@ SPECTRE_TEST_CASE(
 
   check_wrapped_gr_solution_consistency(
       gh::Solutions::WrappedGr<RelativisticEuler::Solutions::TovStar>{
-          1.e-3,
+          1.e-3, 0.0,
           std::make_unique<EquationsOfState::PolytropicFluid<true>>(8.0, 2.0)},
       RelativisticEuler::Solutions::TovStar{
-          1.e-3,
+          1.e-3, 0.0,
           std::make_unique<EquationsOfState::PolytropicFluid<true>>(8.0, 2.0)},
       x_3d, t);
 }

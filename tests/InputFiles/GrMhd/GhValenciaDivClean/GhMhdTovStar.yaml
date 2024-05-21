@@ -38,6 +38,7 @@ PhaseChangeAndTriggers:
 InitialData: &InitialData
   GeneralizedHarmonic(TovStar):
     CentralDensity: 1.28e-3
+    VelocityPerturbation: 0.0
     EquationOfState:
         PolytropicFluid:
             PolytropicConstant: 100.0

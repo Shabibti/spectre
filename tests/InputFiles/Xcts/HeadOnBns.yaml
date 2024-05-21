@@ -25,6 +25,7 @@ Background: &background
         # https://arxiv.org/abs/1708.07358.
         # This central density corresponds to h = 1.2, or about 5e14 g/cm^3.
         CentralDensity: 8.087415253997405e-4
+        VelocityPerturbation: 0.0
         EquationOfState:
           PolytropicFluid:
             PolytropicConstant: 123.6489

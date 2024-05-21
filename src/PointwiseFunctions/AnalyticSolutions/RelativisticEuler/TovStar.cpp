@@ -20,11 +20,12 @@ namespace RelativisticEuler::Solutions {
 TovStar::TovStar(CkMigrateMessage* msg) : InitialData(msg) {}
 
 TovStar::TovStar(
-    const double central_rest_mass_density,
+    const double central_rest_mass_density, const double velocity_perturbation,
     std::unique_ptr<EquationsOfState::EquationOfState<true, 1>>
         equation_of_state,
     const RelativisticEuler::Solutions::TovCoordinates coordinate_system)
     : central_rest_mass_density_(central_rest_mass_density),
+      velocity_perturbation_(velocity_perturbation),
       equation_of_state_(std::move(equation_of_state)),
       coordinate_system_(coordinate_system),
       radial_solution_(*equation_of_state_, central_rest_mass_density_,
@@ -33,6 +34,7 @@ TovStar::TovStar(
 TovStar::TovStar(const TovStar& rhs)
     : evolution::initial_data::InitialData(rhs),
       central_rest_mass_density_(rhs.central_rest_mass_density_),
+      velocity_perturbation_(rhs.velocity_perturbation_),
       equation_of_state_(rhs.equation_of_state_->get_clone()),
       coordinate_system_(rhs.coordinate_system_),
       radial_solution_(*equation_of_state_, central_rest_mass_density_,
@@ -40,6 +42,7 @@ TovStar::TovStar(const TovStar& rhs)
 
 TovStar& TovStar::operator=(const TovStar& rhs) {
   central_rest_mass_density_ = rhs.central_rest_mass_density_;
+  velocity_perturbation_ = rhs.velocity_perturbation_;
   equation_of_state_ = rhs.equation_of_state_->get_clone();
   coordinate_system_ = rhs.coordinate_system_;
   radial_solution_ = RelativisticEuler::Solutions::TovSolution(
@@ -55,6 +58,7 @@ std::unique_ptr<evolution::initial_data::InitialData> TovStar::get_clone()
 void TovStar::pup(PUP::er& p) {
   InitialData::pup(p);
   p | central_rest_mass_density_;
+  p | velocity_perturbation_;
   p | equation_of_state_;
   p | coordinate_system_;
   p | radial_solution_;
@@ -514,11 +518,23 @@ void TovVariables<DataType, Region>::operator()(
 template <typename DataType, StarRegion Region>
 void TovVariables<DataType, Region>::operator()(
     const gsl::not_null<tnsr::I<DataType, 3>*> spatial_velocity,
-    const gsl::not_null<Cache*> /*cache*/,
+    [[maybe_unused]] const gsl::not_null<Cache*> cache,
     hydro::Tags::SpatialVelocity<DataType, 3> /*meta*/) const {
-  get<0>(*spatial_velocity) = 0.;
-  get<1>(*spatial_velocity) = 0.;
-  get<2>(*spatial_velocity) = 0.;
+  if constexpr (Region == StarRegion::Center or
+                Region == StarRegion::Exterior) {
+    get<0>(*spatial_velocity) = 0.;
+    get<1>(*spatial_velocity) = 0.;
+    get<2>(*spatial_velocity) = 0.;
+  } else {
+    const auto& areal_radius =
+        radial_solution.coordinate_system() ==
+                RelativisticEuler::Solutions::TovCoordinates::Isotropic
+            ? get(cache->get_var(*this, Tags::ArealRadius<DataType>{}))
+            : radius;
+    get<0>(*spatial_velocity) = perturbation * coords.get(0) / areal_radius;
+    get<1>(*spatial_velocity) = perturbation * coords.get(1) / areal_radius;
+    get<2>(*spatial_velocity) = perturbation * coords.get(2) / areal_radius;
+  }
 }
 
 template <typename DataType, StarRegion Region>

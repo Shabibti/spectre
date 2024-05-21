@@ -43,6 +43,7 @@ void test_solution(const TovCoordinates coord_system) {
       elliptic::analytic_data::AnalyticSolution, TovStar>(
       "TovStar:\n"
       "  CentralDensity: 1.e-3\n"
+      "  VelocityPerturbation: 0.0\n"
       "  EquationOfState:\n"
       "    PolytropicFluid:\n"
       "      PolytropicExponent: 2\n"

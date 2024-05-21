@@ -32,15 +32,15 @@ MagnetizedTovStar& MagnetizedTovStar::operator=(MagnetizedTovStar&& /*rhs*/) =
 MagnetizedTovStar::~MagnetizedTovStar() = default;
 
 MagnetizedTovStar::MagnetizedTovStar(
-    const double central_rest_mass_density,
+    const double central_rest_mass_density, const double velocity_perturbation,
     std::unique_ptr<MagnetizedTovStar::equation_of_state_type>
         equation_of_state,
     const RelativisticEuler::Solutions::TovCoordinates coordinate_system,
     std::vector<std::unique_ptr<
         grmhd::AnalyticData::InitialMagneticFields::InitialMagneticField>>
         magnetic_fields)
-    : tov_star(central_rest_mass_density, std::move(equation_of_state),
-               coordinate_system),
+    : tov_star(central_rest_mass_density, velocity_perturbation,
+               std::move(equation_of_state), coordinate_system),
       magnetic_fields_(std::move(magnetic_fields)) {}
 
 MagnetizedTovStar::MagnetizedTovStar(const MagnetizedTovStar& rhs)

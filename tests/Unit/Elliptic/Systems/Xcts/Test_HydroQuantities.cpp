@@ -17,8 +17,8 @@
 #include "PointwiseFunctions/AnalyticSolutions/Xcts/Factory.hpp"
 #include "PointwiseFunctions/AnalyticSolutions/Xcts/TovStar.hpp"
 #include "PointwiseFunctions/Hydro/EquationsOfState/PolytropicFluid.hpp"
-#include "PointwiseFunctions/Hydro/Tags.hpp"
 #include "PointwiseFunctions/Hydro/LowerSpatialFourVelocity.hpp"
+#include "PointwiseFunctions/Hydro/Tags.hpp"
 #include "PointwiseFunctions/InitialDataUtilities/AnalyticSolution.hpp"
 #include "PointwiseFunctions/InitialDataUtilities/Background.hpp"
 #include "Utilities/ProtocolHelpers.hpp"
@@ -47,7 +47,8 @@ SPECTRE_TEST_CASE("Unit.Elliptic.Systems.Xcts.HydroQuantities",
   using hydro_tags = AnalyticData::hydro_tags<DataVector>;
   using spatial_metric_tag = gr::Tags::SpatialMetric<DataVector, 3>;
   const Solutions::TovStar tov_star{
-      1.e-3, std::make_unique<EquationsOfState::PolytropicFluid<true>>(1., 2.),
+      1.e-3, 0.0,
+      std::make_unique<EquationsOfState::PolytropicFluid<true>>(1., 2.),
       RelativisticEuler::Solutions::TovCoordinates::Schwarzschild};
   const double outer_radius = tov_star.radial_solution().outer_radius();
   const tnsr::I<DataVector, 3> x{

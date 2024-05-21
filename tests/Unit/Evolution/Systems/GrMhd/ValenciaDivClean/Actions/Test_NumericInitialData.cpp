@@ -133,7 +133,7 @@ void test_numeric_initial_data(const NumericInitialData& initial_data,
 
   // We get test data from a TOV solution
   RelativisticEuler::Solutions::TovStar tov_star{
-      1.e-3,
+      1.e-3, 0.0,
       std::make_unique<EquationsOfState::PolytropicFluid<true>>(100., 2.)};
   const double star_radius = tov_star.radial_solution().outer_radius();
   const auto& eos = tov_star.equation_of_state();

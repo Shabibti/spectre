@@ -195,12 +195,12 @@ class TovStar : public elliptic::analytic_data::AnalyticSolution {
   TovStar& operator=(TovStar&&) = default;
   ~TovStar() = default;
 
-  TovStar(double central_rest_mass_density,
+  TovStar(double central_rest_mass_density, double velocity_perturbation,
           std::unique_ptr<EquationsOfState::EquationOfState<true, 1>>
               equation_of_state,
           const RelativisticEuler::Solutions::TovCoordinates coordinate_system)
-      : tov_star(central_rest_mass_density, std::move(equation_of_state),
-                 coordinate_system) {}
+      : tov_star(central_rest_mass_density, velocity_perturbation,
+                 std::move(equation_of_state), coordinate_system) {}
 
   const EquationsOfState::EquationOfState<true, 1>& equation_of_state() const {
     return tov_star.equation_of_state();

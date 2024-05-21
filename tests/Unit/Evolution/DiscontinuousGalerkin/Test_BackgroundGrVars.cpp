@@ -170,7 +170,7 @@ void test(const gsl::not_null<std::mt19937*> gen) {
   const auto solution = []() {
     if constexpr (TestRuntimeInitialData) {
       return RelativisticEuler::Solutions::TovStar{
-          1.0e-3,
+          1.0e-3, 0.0,
           EquationsOfState::PolytropicFluid<true>{100.0, 2.0}.get_clone(),
           RelativisticEuler::Solutions::TovCoordinates::Schwarzschild};
     } else {
