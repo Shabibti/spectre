@@ -237,23 +237,21 @@ void Gforce::dg_boundary_terms(
       make_with_value<tnsr::I<DataVector, 3, Frame::Inertial>>(
           abs_char_speed_int, 0.0);
 
-  get(lapse) = 0.5 * get(lapse_int) + 0.5 * get(lapse_ext);
+  get(lapse) = get(lapse_int);
 
   for (size_t i = 0; i < 3; ++i) {
-    shift.get(i) = 0.5 * shift_int.get(i) + 0.5 * shift_ext.get(i);
+    shift.get(i) = shift_int.get(i);
 
     for (size_t j = 0; j < 3; ++j) {
-      inv_spatial_metric.get(i, j) = 0.5 * inv_spatial_metric_int.get(i, j) +
-                                     0.5 * inv_spatial_metric_ext.get(i, j);
-      inv_spatial_metric.get(j, i) = 0.5 * inv_spatial_metric_int.get(j, i) +
-                                     0.5 * inv_spatial_metric_ext.get(j, i);
+      inv_spatial_metric.get(i, j) = inv_spatial_metric_int.get(i, j);
+      inv_spatial_metric.get(j, i) = inv_spatial_metric_int.get(j, i);
     }
   }
 
   determinant_and_inverse(make_not_null(&sqrt_det_spatial_metric),
                           make_not_null(&spatial_metric), inv_spatial_metric);
 
-  get(sqrt_det_spatial_metric) = sqrt(get(sqrt_det_spatial_metric));
+  get(sqrt_det_spatial_metric) = sqrt(1.0 / get(sqrt_det_spatial_metric));
 
   Scalar<DataVector> rest_mass_density_LW =
       make_with_value<Scalar<DataVector>>(abs_char_speed_int, 0.0);
@@ -325,7 +323,7 @@ void Gforce::dg_boundary_terms(
           abs_char_speed_int, 0.0);
   for (size_t i = 0; i < 3; ++i) {
     average_normal_covector.get(i) =
-        0.5 * normal_covector_int.get(i) - 0.5 * normal_covector_ext.get(i);
+        normal_covector_int.get(i);
   }
 
   Scalar<DataVector> normal_dot_flux_tilde_d_LW =
