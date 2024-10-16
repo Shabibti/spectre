@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <memory>
 #include <pup.h>
+#include <type_traits>
 
 #include "Evolution/Systems/GeneralizedHarmonic/BoundaryCorrections/Factory.hpp"
 #include "Evolution/Systems/GeneralizedHarmonic/System.hpp"
@@ -19,6 +20,7 @@
 #include "Utilities/PrettyType.hpp"
 #include "Utilities/Serialization/CharmPupable.hpp"
 #include "Utilities/TMPL.hpp"
+#include "Utilities/TypeTraits/IsA.hpp"
 
 namespace grmhd::GhValenciaDivClean::BoundaryCorrections {
 namespace detail {
@@ -29,7 +31,8 @@ template <typename DerivedGhCorrection, typename DerivedValenciaCorrection,
           typename GhTempTagList, typename ValenciaTempTagList,
           typename DeduplicatedTempTags, typename GhPrimTagList,
           typename ValenicaPrimTagList, typename GhVolumeTagList,
-          typename ValenciaVolumeTagList>
+          typename ValenciaVolumeTagList, typename GhBoundaryVolumeTagList,
+          typename ValenciaBoundaryVolumeTagList>
 struct ProductOfCorrectionsImpl;
 
 template <typename DerivedGhCorrection, typename DerivedValenciaCorrection,
@@ -39,7 +42,8 @@ template <typename DerivedGhCorrection, typename DerivedValenciaCorrection,
           typename... GhTempTags, typename... ValenciaTempTags,
           typename... DeduplicatedTempTags, typename... GhPrimTags,
           typename... ValenciaPrimTags, typename... GhVolumeTags,
-          typename... ValenciaVolumeTags>
+          typename... ValenciaVolumeTags, typename... GhBoundaryVolumeTags,
+          typename... ValenciaBoundaryVolumeTags>
 struct ProductOfCorrectionsImpl<
     DerivedGhCorrection, DerivedValenciaCorrection,
     tmpl::list<GhPackageFieldTags...>, tmpl::list<ValenciaPackageFieldTags...>,
@@ -48,7 +52,23 @@ struct ProductOfCorrectionsImpl<
     tmpl::list<GhTempTags...>, tmpl::list<ValenciaTempTags...>,
     tmpl::list<DeduplicatedTempTags...>, tmpl::list<GhPrimTags...>,
     tmpl::list<ValenciaPrimTags...>, tmpl::list<GhVolumeTags...>,
-    tmpl::list<ValenciaVolumeTags...>> {
+    tmpl::list<ValenciaVolumeTags...>, tmpl::list<GhBoundaryVolumeTags...>,
+    tmpl::list<ValenciaBoundaryVolumeTags...>> {
+  template <typename Tag, bool IsAUniquePtr>
+  struct get_type {
+    using type = typename Tag::type;
+  };
+
+  template <typename Tag>
+  struct get_type<Tag, true> {
+    using type = typename Tag::type::element_type;
+  };
+
+  template <typename Tag>
+  using get_type_t =
+      typename get_type<Tag,
+                        tt::is_a_v<std::unique_ptr, typename Tag::type>>::type;
+
   static double dg_package_data(
       const gsl::not_null<
           typename GhPackageFieldTags::type*>... gh_packaged_fields,
@@ -112,14 +132,20 @@ struct ProductOfCorrectionsImpl<
           type&... valencia_external_packaged_fields,
       const dg::Formulation dg_formulation,
 
+      const get_type_t<GhBoundaryVolumeTags>&... gh_boundary_volume_quantities,
+      const get_type_t<
+          ValenciaBoundaryVolumeTags>&... valencia_boundary_volume_quantities,
+
       const DerivedGhCorrection& gh_correction,
       const DerivedValenciaCorrection& valencia_correction) {
     gh_correction.dg_boundary_terms(
         gh_boundary_corrections..., gh_internal_packaged_fields...,
-        gh_external_packaged_fields..., dg_formulation);
+        gh_external_packaged_fields..., dg_formulation,
+        gh_boundary_volume_quantities...);
     valencia_correction.dg_boundary_terms(
         valencia_boundary_corrections..., valencia_internal_packaged_fields...,
-        valencia_external_packaged_fields..., dg_formulation);
+        valencia_external_packaged_fields..., dg_formulation,
+        valencia_boundary_volume_quantities...);
   }
 };
 }  // namespace detail
@@ -172,7 +198,9 @@ class ProductOfCorrections final : public BoundaryCorrection {
       dg_package_data_temporary_tags, tmpl::list<>,
       typename DerivedValenciaCorrection::dg_package_data_primitive_tags,
       typename DerivedGhCorrection::dg_package_data_volume_tags,
-      typename DerivedValenciaCorrection::dg_package_data_volume_tags>;
+      typename DerivedValenciaCorrection::dg_package_data_volume_tags,
+      typename DerivedGhCorrection::dg_boundary_terms_volume_tags,
+      typename DerivedValenciaCorrection::dg_boundary_terms_volume_tags>;
 
   static std::string name() {
     return "Product" + pretty_type::name<DerivedGhCorrection>() + "And" +

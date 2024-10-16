@@ -120,14 +120,17 @@ DirectionalIdMap<3, DataVector> NeighborPackagedData::apply(
 
         using dg_package_data_temporary_tags =
             typename DerivedCorrection::dg_package_data_temporary_tags;
-        using dg_package_data_argument_tags =
-            tmpl::append<evolved_vars_tags, recons_prim_tags, fluxes_tags,
-                         tmpl::remove_duplicates<tmpl::push_back<
-                             dg_package_data_temporary_tags,
-                             gr::Tags::SpatialMetric<DataVector, 3>,
-                             gr::Tags::SqrtDetSpatialMetric<DataVector>,
-                             gr::Tags::InverseSpatialMetric<DataVector, 3>,
-                             evolution::dg::Actions::detail::NormalVector<3>>>>;
+        using dg_package_data_argument_tags = tmpl::append<
+            evolved_vars_tags, recons_prim_tags, fluxes_tags,
+            tmpl::remove_duplicates<tmpl::push_back<
+                tmpl::list<gh::ConstraintDamping::Tags::ConstraintGamma1,
+                           gh::ConstraintDamping::Tags::ConstraintGamma2,
+                           gr::Tags::Lapse<DataVector>,
+                           gr::Tags::Shift<DataVector, 3>>,
+                gr::Tags::SpatialMetric<DataVector, 3>,
+                gr::Tags::SqrtDetSpatialMetric<DataVector>,
+                gr::Tags::InverseSpatialMetric<DataVector, 3>,
+                evolution::dg::Actions::detail::NormalVector<3>>>>;
 
         const auto& element = db::get<domain::Tags::Element<3>>(box);
         const auto& eos = get<hydro::Tags::GrmhdEquationOfState>(box);

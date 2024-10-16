@@ -587,7 +587,8 @@ struct TimeDerivative {
           using dg_package_data_argument_tags = tmpl::append<
               evolved_vars_tags, recons_prim_tags, fluxes_tags,
               tmpl::remove_duplicates<tmpl::push_back<
-                  dg_package_data_temporary_tags,
+                  tmpl::list<gr::Tags::Lapse<DataVector>,
+                             gr::Tags::Shift<DataVector, 3>>,
                   gr::Tags::SpatialMetric<DataVector, 3>,
                   gr::Tags::SqrtDetSpatialMetric<DataVector>,
                   gr::Tags::InverseSpatialMetric<DataVector, 3>,
